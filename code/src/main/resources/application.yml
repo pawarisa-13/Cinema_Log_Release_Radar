@@ -1,0 +1,67 @@
+server:
+  port: ${PORT:8080}
+  servlet:
+    session:
+      cookie:
+        same-site: lax          # blocks cross-site POSTs carrying the session cookie (CSRF protection for /api/**)
+        http-only: true
+
+spring:
+  application:
+    name: cinema-log
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/cinemalog}
+    username: ${DB_USERNAME:cinemalog}
+    password: ${DB_PASSWORD:cinemalog}
+  jpa:
+    open-in-view: false           # all lazy loading happens inside @Transactional services
+    hibernate:
+      ddl-auto: none              # schema is owned by Flyway migrations only
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        default_batch_fetch_size: 50
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  thymeleaf:
+    cache: ${THYMELEAF_CACHE:false}
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+app:
+  zone: Asia/Bangkok
+  mail-from: ${MAIL_FROM:no-reply@cinemalog.app}
+  reminder-cron: "0 0 * * * *"      # check due reminders every hour
+
+tmdb:
+  base-url: https://api.themoviedb.org/3
+  image-base-url: https://image.tmdb.org/t/p
+  api-key: ${TMDB_API_KEY:}         # v3 API key OR v4 read access token — never commit the real value
+  language: en-US
+  region: TH
+  sync-pages: 2
+  sync-cron: "0 15 */6 * * *"       # refresh lists every 6 hours
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+logging:
+  level:
+    com.cinemalog: INFO

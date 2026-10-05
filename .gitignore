@@ -1,0 +1,11 @@
+# build
+code/target/
+target/
+# secrets
+.env
+*.env.local
+# IDE
+.idea/
+*.iml
+.DS_Store
+/.vscode
