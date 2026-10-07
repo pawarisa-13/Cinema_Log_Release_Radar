@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Oops')}"></head>
+<body class="bare">
+<main class="auth" id="main" data-page="error">
+    <div class="auth-card">
+        <span data-doodle="ghost" style="width:120px;margin:0 auto"></span>
+        <h1 class="h1" th:text="${status == 404} ? 'this page wandered off' : 'something went wrong'">something went wrong</h1>
+        <p class="note" style="margin:10px 0 22px" th:text="'error ' + ${status}">error 500</p>
+        <a class="btn solid" th:href="@{/films}">Back to Films</a>
+    </div>
+</main>
+<script type="module">import { hydrateDoodles } from '/js/core/doodles.js'; hydrateDoodles();</script>
+</body>
+</html>
