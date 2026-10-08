@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{fragments/layout :: head('Films')}"></head>
+    <body>
+        <th:block th:replace="~{fragments/layout :: nav('films')}"></th:block>
+        <main id="main" data-page="films">
+            <section class="hero dotgrid">
+                <div class="wrap hero-in">
+                    <div>
+                        <p class="eyebrow"
+                            th:text="${#temporals.format(#temporals.createToday(), 'EEEE, d MMMM yyyy')}">Saturday,
+                            3 October 2026</p>
+                        <h1 class="h1">what are we <span
+                                class="mark">watching</span>?</h1>
+                        <p class="lead">Find your next movie, keep track of the
+                            ones you loved, and never miss a release day
+                            again.</p>
+                        <div id="filters-slot"></div>
+                    </div>
+                    <div class="hero-art">
+                        <span data-doodle="popcorn"></span>
+                        <div class="bubble"><p>hi, I'm Pop! pick something &amp;
+                                I'll bring snacks</p><span
+                                data-doodle="arrow"></span></div>
+                    </div>
+                </div>
+            </section>
+            <div class="wrap" id="sections"></div>
+        </main>
+        <th:block
+            th:replace="~{fragments/layout :: footer('films')}"></th:block>
+        <script type="module" th:src="@{/js/pages/films.js}"></script>
+    </body>
+</html>
