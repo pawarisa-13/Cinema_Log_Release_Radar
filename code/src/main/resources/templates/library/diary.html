@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Diary')}"></head>
+<body>
+<th:block th:replace="~{fragments/layout :: nav('diary')}"></th:block>
+<main id="main" data-page="diary">
+    <div class="wrap">
+        <header class="diary-head">
+            <div class="diary-head-l">
+                <span data-doodle="reel"></span>
+                <div><h1 class="h1">my movie diary</h1><p class="note" style="margin-top:6px">little memories from the movies I’ve watched.</p></div>
+            </div>
+            <button class="btn solid" data-act="add-diary">+ Add to Diary</button>
+        </header>
+        <div id="page"><p class="loading">flipping to this month…</p></div>
+    </div>
+</main>
+<th:block th:replace="~{fragments/layout :: footer('diary')}"></th:block>
+<script type="module" th:src="@{/js/pages/diary.js}"></script>
+</body>
+</html>
