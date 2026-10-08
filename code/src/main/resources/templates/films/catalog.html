@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head th:replace="~{fragments/layout :: head('Catalog')}"></head>
+    <body>
+        <th:block th:replace="~{fragments/layout :: nav('films')}"></th:block>
+        <main id="main" data-page="catalog">
+            <div class="wrap">
+                <div class="back"><button class="link" data-act="back">&larr;
+                        back</button></div>
+                <div class="sec-head" style="margin-top:6px">
+                    <div class="t"><h1 class="h1" id="cat-title">the whole
+                            shelf</h1><span class="note"
+                            id="cat-count"></span></div>
+                </div>
+                <div id="filters-slot"></div>
+                <div id="results" style="margin-top:30px"></div>
+                <nav class="pager" id="pager" aria-label="Pages"></nav>
+            </div>
+        </main>
+        <th:block
+            th:replace="~{fragments/layout :: footer('films')}"></th:block>
+        <script type="module" th:src="@{/js/pages/catalog.js}"></script>
+    </body>
+</html>
