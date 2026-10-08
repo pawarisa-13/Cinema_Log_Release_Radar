@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Collection')}"></head>
+<body>
+<th:block th:replace="~{fragments/layout :: nav('profile')}"></th:block>
+<main id="main" data-page="collection" th:attr="data-collection-id=${collectionId}">
+    <div class="wrap">
+        <div class="back"><a class="link" th:href="@{/collections}">&larr; all collections</a></div>
+        <div id="page"><p class="loading">loading…</p></div>
+    </div>
+</main>
+<th:block th:replace="~{fragments/layout :: footer('profile')}"></th:block>
+<script type="module" th:src="@{/js/pages/collections.js}"></script>
+</body>
+</html>
