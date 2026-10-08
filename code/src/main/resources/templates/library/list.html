@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('My library')}"></head>
+<body>
+<th:block th:replace="~{fragments/layout :: nav('profile')}"></th:block>
+<main id="main" th:attr="data-page=${listType}, data-list-type=${listType}">
+    <div class="wrap">
+        <div class="back"><button class="link" data-act="back">&larr; back</button></div>
+        <div id="page"><p class="loading">loading…</p></div>
+    </div>
+</main>
+<th:block th:replace="~{fragments/layout :: footer('profile')}"></th:block>
+<script type="module" th:src="@{/js/pages/list.js}"></script>
+</body>
+</html>
