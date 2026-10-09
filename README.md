@@ -27,27 +27,55 @@
 
 ## System Architecture
 
-แบ่งเป็น 4 ชั้น ทุกคำขอเดินลงทีละชั้น Controller ไม่เรียก Repository ตรง
+ระบบเป็นแอป Spring Boot ตัวเดียว ทั้งหน้าเว็บและ API อยู่ในแอปเดียวกัน โค้ดแบ่งเป็นชั้น (Layered Architecture) คำขอจากผู้ใช้จะเดินลงทีละชั้นจากบนลงล่าง และไม่มีการข้ามชั้น เช่น Controller จะไม่เรียก Repository ตรง ๆ แต่ต้องผ่าน Service ก่อนเสมอ
 
-```
-Browser (Thymeleaf page + JS modules)
-   │  GET /films, /diary …            │  fetch /api/v1/…
-   ▼                                   ▼
-controller.web  (@Controller)     controller.api (@RestController)   ← Presentation
-   └───────────────┬───────────────────┘
-                   ▼
-service (interfaces) → service.impl (@Transactional)                 ← Business logic
-   │  service.notification (Strategy / Template / Factory / Observer)
-   │  service.external.tmdb (Adapter)
-   ▼
-repository (Spring Data JPA, Specification builder)                  ← Data access
-   ▼
-domain.entity / enums / event  +  dto + mapper                       ← Domain & contracts
-   ▼
-PostgreSQL (Flyway)
+```mermaid
+flowchart TD
+    U["👤 ผู้ใช้ (Browser)"]
+
+    subgraph P["1. Presentation Layer — รับคำขอ / ส่งหน้าเว็บ"]
+        WEB["controller.web<br/>ส่งหน้าเว็บ Thymeleaf"]
+        API["controller.api<br/>REST API /api/v1/…"]
+    end
+
+    subgraph B["2. Business Logic Layer — กฎของระบบ"]
+        SVC["service<br/>Diary, Watchlist, Reminder, …"]
+        NOTI["service.notification<br/>ส่งแจ้งเตือน"]
+        EXT["service.external.tmdb<br/>ดึงข้อมูลหนัง"]
+    end
+
+    subgraph D["3. Data Access Layer — อ่าน/เขียนฐานข้อมูล"]
+        REPO["repository<br/>Spring Data JPA"]
+    end
+
+    DB[("PostgreSQL 17<br/>Supabase")]
+    TMDB["☁️ TMDB API"]
+
+    U -->|"เปิดหน้า /films, /diary"| WEB
+    U -->|"JS เรียก fetch"| API
+    WEB --> SVC
+    API --> SVC
+    SVC --> NOTI
+    SVC --> EXT
+    EXT --> TMDB
+    SVC --> REPO
+    REPO --> DB
 ```
 
-Controllers never call repositories. Details: [`doc/diagrams/03-class-diagram.md`](doc/diagrams/03-class-diagram.md), [`doc/diagrams/07-component-deployment.md`](doc/diagrams/07-component-deployment.md), [`doc/design-patterns.md`](doc/design-patterns.md), [`doc/solid-analysis.md`](doc/solid-analysis.md).
+| ชั้น | แพ็กเกจ | หน้าที่ |
+|---|---|---|
+| Presentation | `controller.web`, `controller.api` | รับคำขอจากผู้ใช้ ตรวจข้อมูลที่ส่งมา แล้วส่งหน้าเว็บหรือ JSON กลับไป |
+| Business Logic | `service`, `service.impl`, `service.notification`, `service.external.tmdb` | กฎของระบบ เช่น ห้ามบันทึกวันดูในอนาคต ตั้งเตือนได้เฉพาะหนังที่ยังไม่ฉาย ส่งแจ้งเตือน ดึงข้อมูลจาก TMDB |
+| Data Access | `repository` | อ่านและบันทึกข้อมูลลงฐานข้อมูลผ่าน Spring Data JPA |
+| ข้อมูลที่ใช้ร่วมกัน | `domain` (entity, enum, event), `dto`, `mapper` | รูปแบบข้อมูลที่ทุกชั้นใช้ร่วมกัน entity ไม่ถูกส่งออกไปนอก service แต่จะแปลงเป็น DTO ก่อน |
+
+**ตัวอย่างการทำงาน: กดบันทึกว่าดูหนังแล้ว**
+1. JS ในหน้าเว็บส่ง `POST /api/v1/users/me/diary` ไปที่ `DiaryController` (Presentation)
+2. `DiaryServiceImpl` ตรวจกฎ เช่น วันที่ต้องไม่อยู่ในอนาคต แล้วสั่งบันทึก (Business Logic)
+3. `WatchedMovieRepository` บันทึกลงตารางในฐานข้อมูล (Data Access)
+4. Service ประกาศ event ว่ามีการบันทึกใหม่ แล้ว `NotificationEventListener` สร้างแจ้งเตือนให้ (Observer pattern)
+
+รายละเอียดเพิ่มเติม: [Class diagram](doc/diagrams/03-class-diagram.md) · [Component & Deployment](doc/diagrams/07-component-deployment.md) · [Design patterns](doc/design-patterns.md) · [SOLID](doc/solid-analysis.md)
 
 ## Database Design (ER Diagram)
 
