@@ -1,0 +1,159 @@
+@startchen
+!include _style.iuml
+left to right direction
+<style>
+chenEerDiagram {
+  BackgroundColor white
+  LineColor black
+  FontName Arial
+  FontSize 12
+}
+</style>
+title ER Diagram — Chen notation (presentation view; columns, types and constraints are in the crow's foot schema)
+
+entity USERS {
+  id <<key>>
+  email
+  password_hash
+  created_at
+}
+entity USER_PROFILES {
+  id <<key>>
+  display_name
+  bio
+  avatar_style
+  avatar_color
+  updated_at
+}
+entity GENRES {
+  id <<key>>
+  name
+}
+entity MOVIES {
+  id <<key>>
+  tmdb_id
+  title
+  original_title
+  overview
+  poster_path
+  backdrop_path
+  release_date
+  runtime
+  vote_average
+  popularity
+  original_language
+  director
+  cast_names
+  details_fetched_at
+  created_at
+}
+entity WATCHED_MOVIES {
+  id <<key>>
+  watched_date
+  rating
+  review
+  place
+  created_at
+  updated_at
+}
+entity WATCHLIST_ITEMS {
+  id <<key>>
+  added_at
+}
+entity LIKED_MOVIES {
+  id <<key>>
+  liked_at
+}
+entity COLLECTIONS {
+  id <<key>>
+  name
+  description
+  created_at
+}
+entity COLLECTION_MOVIES {
+  id <<key>>
+  added_at
+}
+entity REMINDERS {
+  id <<key>>
+  offset_days
+  reminder_date
+  channel
+  status
+  created_at
+  sent_at
+}
+entity NOTIFICATIONS {
+  id <<key>>
+  type
+  channel
+  message
+  is_read
+  created_at
+}
+relationship HAS {
+}
+relationship FAVORITE {
+}
+relationship TAGGED {
+}
+relationship LOGS {
+}
+relationship WATCHED {
+}
+relationship WANTS {
+}
+relationship LISTED {
+}
+relationship LIKES {
+}
+relationship LIKED {
+}
+relationship OWNS {
+}
+relationship CONTAINS {
+}
+relationship COLLECTED {
+}
+relationship SETS {
+}
+relationship REMINDS_ABOUT {
+}
+relationship RECEIVES {
+}
+relationship ABOUT {
+}
+
+USERS -(0,1)- HAS
+HAS -(1,1)- USER_PROFILES
+USER_PROFILES -(0,N)- FAVORITE
+FAVORITE -(0,N)- GENRES
+MOVIES -(0,N)- TAGGED
+TAGGED -(0,N)- GENRES
+USERS -(0,N)- LOGS
+LOGS -(1,1)- WATCHED_MOVIES
+WATCHED_MOVIES -(1,1)- WATCHED
+WATCHED -(0,N)- MOVIES
+USERS -(0,N)- WANTS
+WANTS -(1,1)- WATCHLIST_ITEMS
+WATCHLIST_ITEMS -(1,1)- LISTED
+LISTED -(0,N)- MOVIES
+USERS -(0,N)- LIKES
+LIKES -(1,1)- LIKED_MOVIES
+LIKED_MOVIES -(1,1)- LIKED
+LIKED -(0,N)- MOVIES
+USERS -(0,N)- OWNS
+OWNS -(1,1)- COLLECTIONS
+COLLECTIONS -(0,N)- CONTAINS
+CONTAINS -(1,1)- COLLECTION_MOVIES
+COLLECTION_MOVIES -(1,1)- COLLECTED
+COLLECTED -(0,N)- MOVIES
+USERS -(0,N)- SETS
+SETS -(1,1)- REMINDERS
+REMINDERS -(1,1)- REMINDS_ABOUT
+REMINDS_ABOUT -(0,N)- MOVIES
+USERS -(0,N)- RECEIVES
+RECEIVES -(1,1)- NOTIFICATIONS
+NOTIFICATIONS -(0,1)- ABOUT
+ABOUT -(0,N)- MOVIES
+@endchen
