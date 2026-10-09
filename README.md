@@ -1,4 +1,4 @@
-﻿# Cinema_Log_Release_Radar
+﻿  # Poppy Night — Cinema Log & Release Radar
 ระบบบันทึกความทรงจำการดูหนังและเตือนตารางหนังเข้า
 
 CP353002 Principles of Software Design and Development — Section 03

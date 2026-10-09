@@ -1,0 +1,247 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Use Case Diagram and Descriptions</title>
+<style>
+@page { size: A4; margin: 16mm 15mm 16mm 15mm; }
+body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #000; }
+h1 { font-size: 16pt; margin: 0 0 2mm; } h2 { font-size: 12.5pt; margin: 6mm 0 2mm; border-bottom: 1px solid #000; padding-bottom: 1mm; }
+p.sub { margin: 0 0 4mm; font-size: 9.5pt; }
+.fig { text-align: center; } .fig img { max-width: 100%; max-height: 222mm; }
+.cap { text-align: center; font-size: 9pt; margin-top: 2mm; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #000; padding: 1.4mm 2mm; vertical-align: top; text-align: left; }
+table.uc { margin: 0 0 5mm; page-break-inside: avoid; }
+table.uc th { width: 32mm; font-weight: bold; background: #fff; }
+table.rel th { background: #fff; }
+ul, ol { margin: 0; padding-left: 5mm; } li { margin: 0.3mm 0; }
+code { font-family: "Courier New", monospace; font-size: 8.8pt; }
+.pb { page-break-before: always; }
+</style></head><body>
+<h1>Cinema Log &amp; Release Radar — Use Case Model</h1>
+<p class="sub">CP353002 · Section 03 · source: <code>doc/diagrams/01-use-case.puml</code></p>
+<h2>1. Use Case Diagram</h2>
+<div class="fig"><img src="../01-use-case.svg" alt="Use case diagram"></div>
+<div class="cap">Figure 1 — Use case diagram</div>
+<h2 class="pb">2. Actors</h2>
+<table class="rel"><tr><th style="width:42mm">Actor</th><th>Description</th></tr>
+<tr><td><b>Visitor</b></td><td>Not logged in. Can only reach <code>/login</code>, <code>/register</code> and the public API (<code>SecurityConfig</code>).</td></tr><tr><td><b>Member</b></td><td>A logged-in Visitor (generalization). Every page and <code>/api/v1/users/me/**</code> needs a session.</td></tr><tr><td><b>Scheduler</b></td><td>Spring <code>@Scheduled</code> jobs <code>MovieSyncJob</code> and <code>ReminderJob</code>. Each also runs once on <code>ApplicationReadyEvent</code>.</td></tr><tr><td><b>TMDB API, SMTP server</b></td><td>External systems. Email is optional (<code>spring.mail.host</code> may be empty).</td></tr></table>
+<h2>3. «include» / «extend» relationships</h2>
+<table class="rel"><tr><th style="width:38mm">Relation</th><th>Why</th><th>Code</th></tr>
+<tr><td>UC01 «include» UC02</td><td>After a successful register the page always submits the hidden login form</td><td><code>templates/auth/register.html</code> (<code>#auto-login</code>), <code>pages/auth.js</code></td></tr><tr><td>UC04 «extend» UC02</td><td>Only when the profile has no favorite genres</td><td><code>OnboardingAwareSuccessHandler</code> → <code>UserProfileService.needsOnboarding()</code></td></tr><tr><td>UC07 «extend» UC06</td><td>Only for a text query of 2+ characters, on page 0, with a TMDB key</td><td><code>MovieQueryServiceImpl.search()</code> → <code>MovieSyncService.importSearchResults()</code></td></tr><tr><td>UC08 «include» UC10</td><td>The movie page always loads its reviews</td><td><code>pages/movie.js</code> → <code>GET /api/v1/movies/{id}/reviews</code></td></tr><tr><td>UC09 «extend» UC08</td><td>Only when details are missing or stale and a key is set</td><td><code>MovieQueryServiceImpl.getDetail()</code> → <code>Movie.needsDetails()</code> → <code>refreshDetails()</code></td></tr><tr><td>UC23 «include» UC24</td><td>Every due reminder is delivered</td><td><code>ReminderDispatchServiceImpl.dispatchDueReminders()</code></td></tr><tr><td>UC24 «extend» UC18</td><td>Only when the reminder date has already been reached</td><td><code>ReminderServiceImpl.save()</code> → <code>dispatchIfDue()</code></td></tr></table>
+<h2>4. Use Case Descriptions</h2>
+<table class="uc">
+<tr><th>Use Case ID</th><td><b>UC01</b></td></tr>
+<tr><th>Use Case Name</th><td>Register account</td></tr>
+<tr><th>Primary Actor</th><td>Visitor</td></tr>
+<tr><th>Description</th><td>A visitor creates an account and is logged in straight away.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>Not logged in</li></ul></td></tr>
+<tr><th>Post-conditions</th><td><ul><li><code>users</code> + <code>user_profiles</code> rows exist; password stored as BCrypt hash</li></ul></td></tr>
+<tr><th>Main Flow</th><td><ol><li>Visitor enters display name, email and password.</li><li>Page sends <code>POST /api/v1/auth/register</code>.</li><li>System creates the account and profile.</li><li>Page logs the visitor in automatically (UC02).</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td><ul><li>Email already used → 409.</li><li>Blank name, invalid email, or password not 6–72 characters → 400 with <code>fieldErrors</code>.</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC02</b></td></tr>
+<tr><th>Use Case Name</th><td>Log in</td></tr>
+<tr><th>Primary Actor</th><td>Visitor</td></tr>
+<tr><th>Description</th><td>A visitor signs in with email and password and gets a session.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>Account exists</li></ul></td></tr>
+<tr><th>Post-conditions</th><td><ul><li>Session cookie set</li></ul></td></tr>
+<tr><th>Main Flow</th><td><ol><li>Visitor submits email + password to <code>/login</code>.</li><li>System creates a session.</li><li>System redirects to <code>/films</code>.</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td><ul><li>Wrong email/password → <code>/login?error</code>.</li><li>No favorite genres → <code>/onboarding</code> (UC04).</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC03</b></td></tr>
+<tr><th>Use Case Name</th><td>Log out</td></tr>
+<tr><th>Primary Actor</th><td>Member</td></tr>
+<tr><th>Description</th><td>A member ends the current session.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>Logged in</li></ul></td></tr>
+<tr><th>Post-conditions</th><td><ul><li>Session ended, redirect to <code>/login?logout</code></li></ul></td></tr>
+<tr><th>Main Flow</th><td><ol><li>Member opens the nav menu and chooses log out (<code>POST /logout</code>).</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td>—</td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC04</b></td></tr>
+<tr><th>Use Case Name</th><td>Pick favorite genres</td></tr>
+<tr><th>Primary Actor</th><td>Member</td></tr>
+<tr><th>Description</th><td>A member chooses the genres used for recommendations.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>Logged in</li></ul></td></tr>
+<tr><th>Post-conditions</th><td><ul><li><code>user_favorite_genres</code> replaced</li></ul></td></tr>
+<tr><th>Main Flow</th><td><ol><li>Member ticks genres.</li><li>Page sends <code>PUT /api/v1/users/me/favorite-genres</code>.</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td><ul><li>None ticked → 400 &quot;Pick at least one genre&quot;.</li><li>More than 10 → 400.</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC05</b></td></tr>
+<tr><th>Use Case Name</th><td>Browse discovery shelves</td></tr>
+<tr><th>Primary Actor</th><td>Member</td></tr>
+<tr><th>Description</th><td>A member browses the home shelves of movies.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>Logged in</li></ul></td></tr>
+<tr><th>Post-conditions</th><td>—</td></tr>
+<tr><th>Main Flow</th><td><ol><li>Member opens <code>/films</code>.</li><li>System shows now showing, upcoming, top rated and recommended (<code>/api/v1/movies/now-showing</code>, <code>/upcoming</code>, <code>/top-rated</code>, <code>/recommended</code>).</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td><ul><li>No favorite genres → recommended falls back to top rated.</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC06</b></td></tr>
+<tr><th>Use Case Name</th><td>Search &amp; filter catalog</td></tr>
+<tr><th>Primary Actor</th><td>Member</td></tr>
+<tr><th>Description</th><td>A member searches the catalog with text and filters.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>Logged in</li></ul></td></tr>
+<tr><th>Post-conditions</th><td>—</td></tr>
+<tr><th>Main Flow</th><td><ol><li>Member sets text, genre, year, decade, released-before, min rating, language and sort.</li><li>Page sends <code>GET /api/v1/movies</code>.</li><li>System returns 40 results per page.</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td><ul><li>No match → empty state.</li><li>TMDB error → local results only (warning logged).</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC07</b></td></tr>
+<tr><th>Use Case Name</th><td>Import search results from TMDB</td></tr>
+<tr><th>Primary Actor</th><td>System (extends UC06)</td></tr>
+<tr><th>Description</th><td>During a search the system imports matching movies from TMDB.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>Text query of 2+ characters (<code>MovieSearchCriteria.hasText()</code>), page 0, TMDB key set</li></ul></td></tr>
+<tr><th>Post-conditions</th><td><ul><li>New/updated <code>movies</code> rows</li></ul></td></tr>
+<tr><th>Main Flow</th><td><ol><li><code>TmdbMovieCatalogAdapter.search()</code> is called.</li><li>System upserts matches by <code>tmdb_id</code>.</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td><ul><li>TMDB unreachable → <code>ExternalServiceException</code> caught, search continues.</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC08</b></td></tr>
+<tr><th>Use Case Name</th><td>View movie details</td></tr>
+<tr><th>Primary Actor</th><td>Member</td></tr>
+<tr><th>Description</th><td>A member opens a movie page with details and actions.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>Logged in</li></ul></td></tr>
+<tr><th>Post-conditions</th><td>—</td></tr>
+<tr><th>Main Flow</th><td><ol><li>Member opens <code>/movies/{id}</code>.</li><li>System shows details, cast, reviews (UC10) and similar movies.</li><li>Page shows buttons for like, watchlist, watched, rate, review, remind and collection.</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td><ul><li>Unknown id → 404.</li><li>Movie not released yet → watched/rate/review disabled, remind enabled.</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC09</b></td></tr>
+<tr><th>Use Case Name</th><td>Refresh movie details from TMDB</td></tr>
+<tr><th>Primary Actor</th><td>System (extends UC08)</td></tr>
+<tr><th>Description</th><td>When details are missing or stale the system refreshes them from TMDB.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>Details missing or stale, TMDB key set</li></ul></td></tr>
+<tr><th>Post-conditions</th><td><ul><li><code>details_fetched_at</code> updated</li></ul></td></tr>
+<tr><th>Main Flow</th><td><ol><li><code>MovieSyncService.refreshDetails()</code> is called.</li><li>Runtime, director, cast and genres are updated.</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td><ul><li>TMDB error → old data shown.</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC10</b></td></tr>
+<tr><th>Use Case Name</th><td>Read movie reviews</td></tr>
+<tr><th>Primary Actor</th><td>Member</td></tr>
+<tr><th>Description</th><td>A member reads the reviews of a movie.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>Movie exists</li></ul></td></tr>
+<tr><th>Post-conditions</th><td>—</td></tr>
+<tr><th>Main Flow</th><td><ol><li>Page sends <code>GET /api/v1/movies/{id}/reviews</code>.</li><li>System returns the average rating and reviews, own review first.</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td><ul><li>Unknown movie → 404.</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC11</b></td></tr>
+<tr><th>Use Case Name</th><td>Like / unlike movie</td></tr>
+<tr><th>Primary Actor</th><td>Member</td></tr>
+<tr><th>Description</th><td>A member likes or unlikes a movie.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>Logged in</li></ul></td></tr>
+<tr><th>Post-conditions</th><td><ul><li><code>liked_movies</code> row added/removed</li></ul></td></tr>
+<tr><th>Main Flow</th><td><ol><li>Member presses ♡ → <code>PUT /api/v1/users/me/likes/{movieId}</code>; pressing it again → <code>DELETE</code>.</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td><ul><li>Already liked → no change.</li><li>Unknown movie → 404.</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC12</b></td></tr>
+<tr><th>Use Case Name</th><td>Add / remove watchlist</td></tr>
+<tr><th>Primary Actor</th><td>Member</td></tr>
+<tr><th>Description</th><td>A member adds a movie to or removes it from the watchlist.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>Logged in</li></ul></td></tr>
+<tr><th>Post-conditions</th><td><ul><li><code>watchlist_items</code> row added/removed</li></ul></td></tr>
+<tr><th>Main Flow</th><td><ol><li>Member presses + → <code>PUT /api/v1/users/me/watchlist/{movieId}</code>; remove → <code>DELETE</code>.</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td><ul><li>Already on list → no change.</li><li>Unknown movie → 404.</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC13</b></td></tr>
+<tr><th>Use Case Name</th><td>Log watched movie</td></tr>
+<tr><th>Primary Actor</th><td>Member</td></tr>
+<tr><th>Description</th><td>A member records that they watched a movie, with optional rating and review.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>Logged in, movie released</li></ul></td></tr>
+<tr><th>Post-conditions</th><td><ul><li><code>watched_movies</code> row added; movie removed from watchlist; if a review was written, an in-app &quot;review added&quot; notification</li></ul></td></tr>
+<tr><th>Main Flow</th><td><ol><li>Member picks date, stars, review and place.</li><li>Page sends <code>POST /api/v1/users/me/diary</code>.</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td><ul><li>Date in the future or movie not out yet → 400.</li><li>Rating outside 1–5 → 400.</li><li>Unknown movie → 404.</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC14</b></td></tr>
+<tr><th>Use Case Name</th><td>Edit / delete diary entry</td></tr>
+<tr><th>Primary Actor</th><td>Member</td></tr>
+<tr><th>Description</th><td>A member changes or deletes one of their diary entries.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>Entry belongs to the member</li></ul></td></tr>
+<tr><th>Post-conditions</th><td><ul><li>Entry updated (first review added → notification) or removed</li></ul></td></tr>
+<tr><th>Main Flow</th><td><ol><li>Member chooses edit → <code>PUT /api/v1/users/me/diary/{id}</code>, or delete → <code>DELETE /api/v1/users/me/diary/{id}</code>.</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td><ul><li>Same date rules as UC13.</li><li>Entry of another user → 404.</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC15</b></td></tr>
+<tr><th>Use Case Name</th><td>Browse diary calendar</td></tr>
+<tr><th>Primary Actor</th><td>Member</td></tr>
+<tr><th>Description</th><td>A member browses their diary as a month calendar.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>Logged in</li></ul></td></tr>
+<tr><th>Post-conditions</th><td>—</td></tr>
+<tr><th>Main Flow</th><td><ol><li>Member opens <code>/diary</code> month grid (<code>/diary/calendar?month=</code>).</li><li>Member clicks a day (<code>/diary/day?date=</code>).</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td><ul><li>Empty month → empty state.</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC16</b></td></tr>
+<tr><th>Use Case Name</th><td>Browse library lists</td></tr>
+<tr><th>Primary Actor</th><td>Member</td></tr>
+<tr><th>Description</th><td>A member views their watched, watchlist and liked lists.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>Logged in</li></ul></td></tr>
+<tr><th>Post-conditions</th><td>—</td></tr>
+<tr><th>Main Flow</th><td><ol><li>Member opens the <code>/watched</code>, <code>/watchlist</code> or <code>/liked</code> page.</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td><ul><li>Empty list → empty state.</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC17</b></td></tr>
+<tr><th>Use Case Name</th><td>Manage collections</td></tr>
+<tr><th>Primary Actor</th><td>Member</td></tr>
+<tr><th>Description</th><td>A member creates, renames and deletes collections and adds or removes movies in them.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>Logged in</li></ul></td></tr>
+<tr><th>Post-conditions</th><td><ul><li><code>collections</code> / <code>collection_movies</code> changed</li></ul></td></tr>
+<tr><th>Main Flow</th><td><ol><li>Create, rename, delete via <code>/api/v1/users/me/collections</code>.</li><li>Add/remove movie via <code>PUT</code>/<code>DELETE /{id}/movies/{movieId}</code>.</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td><ul><li>Duplicate name (case-insensitive) → 409.</li><li>Blank name → 400.</li><li>Removing a movie not in it → 404.</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC18</b></td></tr>
+<tr><th>Use Case Name</th><td>Set / change release reminder</td></tr>
+<tr><th>Primary Actor</th><td>Member</td></tr>
+<tr><th>Description</th><td>A member asks to be reminded before an upcoming movie is released.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>Movie not released yet</li></ul></td></tr>
+<tr><th>Post-conditions</th><td><ul><li><code>reminders</code> row SCHEDULED (or SENT)</li></ul></td></tr>
+<tr><th>Main Flow</th><td><ol><li>Member chooses 7 / 3 / 1 / 0 days and IN_APP or EMAIL.</li><li>Page sends <code>PUT /api/v1/users/me/reminders/{movieId}</code>.</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td><ul><li>Other offset → 400.</li><li>Unknown movie → 404.</li><li>Movie already out or no release date → 400.</li><li>Reminder already exists → rescheduled.</li><li>Date already reached → delivered now (UC24).</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC19</b></td></tr>
+<tr><th>Use Case Name</th><td>Cancel release reminder</td></tr>
+<tr><th>Primary Actor</th><td>Member</td></tr>
+<tr><th>Description</th><td>A member removes a reminder.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>Reminder exists</li></ul></td></tr>
+<tr><th>Post-conditions</th><td><ul><li>Status CANCELLED</li></ul></td></tr>
+<tr><th>Main Flow</th><td><ol><li>Page sends <code>DELETE /api/v1/users/me/reminders/{movieId}</code>.</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td><ul><li>No reminder → 404.</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC20</b></td></tr>
+<tr><th>Use Case Name</th><td>Read notifications</td></tr>
+<tr><th>Primary Actor</th><td>Member</td></tr>
+<tr><th>Description</th><td>A member reads their notifications from the bell menu.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>Logged in</li></ul></td></tr>
+<tr><th>Post-conditions</th><td><ul><li>All notifications <code>is_read = true</code></li></ul></td></tr>
+<tr><th>Main Flow</th><td><ol><li>Bell shows unread count + latest 10.</li><li>Opening the bell while there are unread items → <code>POST /notifications/read-all</code>.</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td>—</td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC21</b></td></tr>
+<tr><th>Use Case Name</th><td>Edit profile &amp; view stats</td></tr>
+<tr><th>Primary Actor</th><td>Member</td></tr>
+<tr><th>Description</th><td>A member edits their profile and sees their statistics.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>Logged in</li></ul></td></tr>
+<tr><th>Post-conditions</th><td><ul><li><code>users.email</code> / <code>user_profiles</code> updated</li></ul></td></tr>
+<tr><th>Main Flow</th><td><ol><li>Member edits name, email, bio, avatar and favorite genres → <code>PUT /api/v1/users/me</code>.</li><li>Profile page shows <code>/api/v1/users/me/stats</code>.</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td><ul><li>Email used by another account → 409.</li><li>Invalid fields → 400.</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC22</b></td></tr>
+<tr><th>Use Case Name</th><td>Sync movie catalog</td></tr>
+<tr><th>Primary Actor</th><td>Scheduler</td></tr>
+<tr><th>Description</th><td>A scheduled job keeps the local catalog in step with TMDB.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>TMDB key set</li></ul></td></tr>
+<tr><th>Post-conditions</th><td><ul><li>Missing <code>genres</code> added (existing names kept); <code>movies</code> and <code>movie_genres</code> upserted</li></ul></td></tr>
+<tr><th>Main Flow</th><td><ol><li><code>MovieSyncJob</code> runs <code>syncGenres()</code> + <code>syncCatalog()</code>.</li><li>Now playing, upcoming, popular, top rated × <code>sync-pages</code> are fetched.</li><li>Movies are upserted by <code>tmdb_id</code>.</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td><ul><li>No key → skipped silently.</li><li>TMDB error → WARN &quot;TMDB sync skipped&quot;.</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC23</b></td></tr>
+<tr><th>Use Case Name</th><td>Dispatch due reminders</td></tr>
+<tr><th>Primary Actor</th><td>Scheduler</td></tr>
+<tr><th>Description</th><td>A scheduled job sends every reminder whose date has been reached.</td></tr>
+<tr><th>Pre-conditions</th><td>—</td></tr>
+<tr><th>Post-conditions</th><td><ul><li>Reminders SENT</li></ul></td></tr>
+<tr><th>Main Flow</th><td><ol><li><code>ReminderJob</code> calls <code>dispatchDueReminders()</code>.</li><li>SCHEDULED reminders with date ≤ today are found.</li><li>UC24 runs for each one.</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td><ul><li>Job error → logged.</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>Use Case ID</th><td><b>UC24</b></td></tr>
+<tr><th>Use Case Name</th><td>Deliver reminder notification</td></tr>
+<tr><th>Primary Actor</th><td>System</td></tr>
+<tr><th>Description</th><td>The system delivers one due reminder through its channel.</td></tr>
+<tr><th>Pre-conditions</th><td><ul><li>Reminder due</li></ul></td></tr>
+<tr><th>Post-conditions</th><td><ul><li><code>notifications</code> row added; reminder SENT</li></ul></td></tr>
+<tr><th>Main Flow</th><td><ol><li>Publish <code>ReminderDueEvent</code>.</li><li><code>NotificationSenderFactory.forChannel()</code> picks the sender.</li><li>Sender <code>send()</code> delivers it.</li><li>A <code>notifications</code> row is saved.</li></ol></td></tr>
+<tr><th>Alternative Flow</th><td><ul><li>EMAIL without mail server → email skipped (logged), record still saved.</li></ul></td></tr>
+</table>
+</body></html>

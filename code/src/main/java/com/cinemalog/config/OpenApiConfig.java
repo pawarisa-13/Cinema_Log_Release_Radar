@@ -18,7 +18,7 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("Cinema Log & Release Radar API")
                         .version("v1")
-                        .description("REST API for the movie diary. Log in at /login first (demo@cinemalog.app / cinema123); "
+                        .description("REST API for the movie diary. Log in at /login first (register an account, or use a demo account from the team); "
                                 + "Swagger then reuses the browser session cookie."))
                 .components(new Components().addSecuritySchemes("session",
                         new SecurityScheme().type(SecurityScheme.Type.APIKEY).in(SecurityScheme.In.COOKIE).name("JSESSIONID")))
