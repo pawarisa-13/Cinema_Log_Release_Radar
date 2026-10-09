@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Movie.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cinema-log</a> &gt; <a href="index.source.html" class="el_package">com.cinemalog.domain.entity</a> &gt; <span class="el_source">Movie.java</span></div><h1>Movie.java</h1><pre class="source lang-java linenums">package com.cinemalog.domain.entity;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
+import com.cinemalog.domain.model.ExternalMovie;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.Table;
+
+import org.hibernate.annotations.BatchSize;
+
+@Entity
+@Table(name = &quot;movies&quot;)
+public class Movie {
+
+<span class="fc" id="L31">    private static final Duration DETAILS_TTL = Duration.ofDays(7);</span>
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = &quot;tmdb_id&quot;, nullable = false, unique = true)
+    private Long tmdbId;
+
+    @Column(nullable = false, length = 300)
+    private String title;
+
+    @Column(name = &quot;original_title&quot;, length = 300)
+    private String originalTitle;
+
+    @Column(columnDefinition = &quot;text&quot;)
+    private String overview;
+
+    @Column(name = &quot;poster_path&quot;, length = 200)
+    private String posterPath;
+
+    @Column(name = &quot;backdrop_path&quot;, length = 200)
+    private String backdropPath;
+
+    @Column(name = &quot;release_date&quot;)
+    private LocalDate releaseDate;
+
+    private Integer runtime;
+
+    @Column(name = &quot;vote_average&quot;, nullable = false)
+<span class="pc" id="L61">    private Double voteAverage = 0.0;</span>
+
+    @Column(nullable = false)
+<span class="pc" id="L64">    private Double popularity = 0.0;</span>
+
+    @Column(name = &quot;original_language&quot;, length = 10)
+    private String originalLanguage;
+
+    @Column(length = 200)
+    private String director;
+
+    @Column(name = &quot;cast_names&quot;, length = 500)
+    private String castNames;
+
+    @Column(name = &quot;details_fetched_at&quot;)
+    private Instant detailsFetchedAt;
+
+    @Column(name = &quot;created_at&quot;, nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = &quot;movie_genres&quot;, joinColumns = @JoinColumn(name = &quot;movie_id&quot;), inverseJoinColumns = @JoinColumn(name = &quot;genre_id&quot;))
+    @BatchSize(size = 50)
+<span class="pc" id="L84">    private Set&lt;Genre&gt; genres = new LinkedHashSet&lt;&gt;();</span>
+
+<span class="nc" id="L86">    protected Movie() {</span>
+<span class="nc" id="L87">    }</span>
+
+<span class="fc" id="L89">    public Movie(Long tmdbId, String title) {</span>
+<span class="fc" id="L90">        this.tmdbId = tmdbId;</span>
+<span class="fc" id="L91">        this.title = title;</span>
+<span class="fc" id="L92">        this.createdAt = Instant.now();</span>
+<span class="fc" id="L93">    }</span>
+
+    public void applySummary(ExternalMovie source, Collection&lt;Genre&gt; resolvedGenres) {
+<span class="fc" id="L96">        this.title = source.title();</span>
+<span class="fc" id="L97">        this.originalTitle = source.originalTitle();</span>
+<span class="fc" id="L98">        this.overview = source.overview();</span>
+<span class="fc" id="L99">        this.posterPath = source.posterPath();</span>
+<span class="fc" id="L100">        this.backdropPath = source.backdropPath();</span>
+<span class="fc" id="L101">        this.releaseDate = source.releaseDate();</span>
+<span class="pc bpc" id="L102" title="1 of 2 branches missed.">        this.voteAverage = source.voteAverage() == null ? 0.0 : source.voteAverage();</span>
+<span class="pc bpc" id="L103" title="1 of 2 branches missed.">        this.popularity = source.popularity() == null ? 0.0 : source.popularity();</span>
+<span class="fc" id="L104">        this.originalLanguage = source.originalLanguage();</span>
+<span class="fc bfc" id="L105" title="All 2 branches covered.">        if (!resolvedGenres.isEmpty()) {</span>
+<span class="fc" id="L106">            this.genres.clear();</span>
+<span class="fc" id="L107">            this.genres.addAll(resolvedGenres);</span>
+        }
+<span class="fc" id="L109">    }</span>
+
+    public void applyDetails(ExternalMovie source, Collection&lt;Genre&gt; resolvedGenres, Instant fetchedAt) {
+<span class="nc" id="L112">        applySummary(source, resolvedGenres);</span>
+<span class="nc" id="L113">        this.runtime = source.runtime();</span>
+<span class="nc" id="L114">        this.director = source.director();</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">        this.castNames = source.cast() == null ? null : String.join(&quot;, &quot;, source.cast());</span>
+<span class="nc bnc" id="L116" title="All 4 branches missed.">        if (this.castNames != null &amp;&amp; this.castNames.length() &gt; 500) {</span>
+<span class="nc" id="L117">            this.castNames = this.castNames.substring(0, 500);</span>
+        }
+<span class="nc" id="L119">        this.detailsFetchedAt = fetchedAt;</span>
+<span class="nc" id="L120">    }</span>
+
+    public boolean needsDetails(Instant now) {
+<span class="nc bnc" id="L123" title="All 4 branches missed.">        return detailsFetchedAt == null || detailsFetchedAt.plus(DETAILS_TTL).isBefore(now);</span>
+    }
+
+    public boolean isReleasedBy(LocalDate day) {
+<span class="nc bnc" id="L127" title="All 4 branches missed.">        return releaseDate != null &amp;&amp; !releaseDate.isAfter(day);</span>
+    }
+
+    public List&lt;String&gt; getCastList() {
+<span class="nc bnc" id="L131" title="All 4 branches missed.">        if (castNames == null || castNames.isBlank()) {</span>
+<span class="nc" id="L132">            return List.of();</span>
+        }
+<span class="nc bnc" id="L134" title="All 2 branches missed.">        return Arrays.stream(castNames.split(&quot;,&quot;)).map(String::trim).filter(s -&gt; !s.isEmpty()).toList();</span>
+    }
+
+    public Long getId() {
+<span class="fc" id="L138">        return id;</span>
+    }
+
+    public Long getTmdbId() {
+<span class="nc" id="L142">        return tmdbId;</span>
+    }
+
+    public String getTitle() {
+<span class="fc" id="L146">        return title;</span>
+    }
+
+    public String getOriginalTitle() {
+<span class="nc" id="L150">        return originalTitle;</span>
+    }
+
+    public String getOverview() {
+<span class="nc" id="L154">        return overview;</span>
+    }
+
+    public String getPosterPath() {
+<span class="nc" id="L158">        return posterPath;</span>
+    }
+
+    public String getBackdropPath() {
+<span class="nc" id="L162">        return backdropPath;</span>
+    }
+
+    public LocalDate getReleaseDate() {
+<span class="fc" id="L166">        return releaseDate;</span>
+    }
+
+    public Integer getRuntime() {
+<span class="nc" id="L170">        return runtime;</span>
+    }
+
+    public Double getVoteAverage() {
+<span class="fc" id="L174">        return voteAverage;</span>
+    }
+
+    public Double getPopularity() {
+<span class="nc" id="L178">        return popularity;</span>
+    }
+
+    public String getOriginalLanguage() {
+<span class="nc" id="L182">        return originalLanguage;</span>
+    }
+
+    public String getDirector() {
+<span class="fc" id="L186">        return director;</span>
+    }
+
+    public Instant getCreatedAt() {
+<span class="nc" id="L190">        return createdAt;</span>
+    }
+
+    public Set&lt;Genre&gt; getGenres() {
+<span class="fc" id="L194">        return genres;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

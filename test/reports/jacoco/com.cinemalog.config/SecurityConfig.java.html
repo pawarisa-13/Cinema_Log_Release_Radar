@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SecurityConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cinema-log</a> &gt; <a href="index.source.html" class="el_package">com.cinemalog.config</a> &gt; <span class="el_source">SecurityConfig.java</span></div><h1>SecurityConfig.java</h1><pre class="source lang-java linenums">package com.cinemalog.config;
+
+import com.cinemalog.security.OnboardingAwareSuccessHandler;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+
+@Configuration
+<span class="nc" id="L17">public class SecurityConfig {</span>
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   OnboardingAwareSuccessHandler successHandler) throws Exception {
+<span class="nc" id="L22">        http</span>
+<span class="nc" id="L23">            .csrf(csrf -&gt; csrf.ignoringRequestMatchers(&quot;/api/**&quot;))</span>
+<span class="nc" id="L24">            .authorizeHttpRequests(auth -&gt; auth</span>
+<span class="nc" id="L25">                .requestMatchers(&quot;/login&quot;, &quot;/register&quot;, &quot;/css/**&quot;, &quot;/js/**&quot;, &quot;/img/**&quot;, &quot;/favicon.ico&quot;, &quot;/error&quot;).permitAll()</span>
+<span class="nc" id="L26">                .requestMatchers(&quot;/swagger-ui.html&quot;, &quot;/swagger-ui/**&quot;, &quot;/v3/api-docs/**&quot;, &quot;/actuator/health&quot;).permitAll()</span>
+<span class="nc" id="L27">                .requestMatchers(HttpMethod.POST, &quot;/api/v1/auth/register&quot;).permitAll()</span>
+<span class="nc" id="L28">                .requestMatchers(HttpMethod.GET, &quot;/api/v1/movies/**&quot;, &quot;/api/v1/genres&quot;).permitAll()</span>
+<span class="nc" id="L29">                .anyRequest().authenticated())</span>
+<span class="nc" id="L30">            .formLogin(form -&gt; form</span>
+<span class="nc" id="L31">                .loginPage(&quot;/login&quot;)</span>
+<span class="nc" id="L32">                .successHandler(successHandler)</span>
+<span class="nc" id="L33">                .failureUrl(&quot;/login?error&quot;)</span>
+<span class="nc" id="L34">                .permitAll())</span>
+<span class="nc" id="L35">            .logout(logout -&gt; logout</span>
+<span class="nc" id="L36">                .logoutUrl(&quot;/logout&quot;)</span>
+<span class="nc" id="L37">                .logoutSuccessUrl(&quot;/login?logout&quot;))</span>
+
+<span class="nc" id="L39">            .exceptionHandling(ex -&gt; ex.defaultAuthenticationEntryPointFor(</span>
+<span class="nc" id="L40">                new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED), PathPatternRequestMatcher.withDefaults().matcher(&quot;/api/**&quot;)));</span>
+<span class="nc" id="L41">        return http.build();</span>
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+<span class="nc" id="L46">        return new BCryptPasswordEncoder();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

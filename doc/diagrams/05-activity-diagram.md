@@ -1,18 +1,18 @@
-# Activity diagram — from opening a movie page to a diary entry
+# Activity Diagram — ตั้งแต่เปิดหน้าหนังจนบันทึกลง Diary
 
-UML activity diagram with two swimlanes (**Member** / **System**): initial node, actions, decision and merge nodes with guards, a validation loop and final nodes.
-Source: [`src/05_activity.py`](src/05_activity.py) (draws the SVG with fixed coordinates so no lines cross; run `python3 src/05_activity.py` in this folder) · rendered: [`05-activity-diagram.svg`](05-activity-diagram.svg)
+UML activity diagram ที่มีสอง swimlane (**Member** / **System**) ประกอบด้วย initial node, action, decision node และ merge node พร้อม guard, ลูปตรวจสอบข้อมูล และ final node
+ไฟล์ต้นฉบับ: [`src/05_activity.py`](src/05_activity.py) (วาด SVG ด้วยพิกัดที่กำหนดไว้ตายตัวเพื่อไม่ให้เส้นตัดกัน ให้รัน `python3 src/05_activity.py` ในโฟลเดอร์นี้) · รูปที่ render แล้ว: [`05-activity-diagram.svg`](05-activity-diagram.svg)
 
 ![Activity diagram](05-activity-diagram.svg)
 
-| Step in the diagram | Where in the code |
+| ขั้นตอนในแผนภาพ | อยู่ตรงไหนในโค้ด |
 |---|---|
-| Load movie, 404 if unknown | `MovieQueryServiceImpl.getDetail()` → `ResourceNotFoundException` |
-| Buttons enabled / disabled by release | `static/js/pages/movie.js` (Watched / Rate / Review get `off` when not released; Remind me gets `off` when released) |
-| Like / Watchlist toggle | `LikeController`, `WatchlistController` (`PUT` / `DELETE`) |
-| Add to collection | `components/collect-modal.js` → `CollectionController.addMovie()` / `removeMovie()` |
-| Reminder, send now if due | `ReminderServiceImpl.save()` → `ReminderDispatchService.dispatchIfDue()` |
-| Remove reminder | `components/remind-modal.js` ("Remove reminder", only when one exists) → `ReminderController.cancel()` → `ReminderServiceImpl.cancel()` |
-| Validation loop | `DiaryEntryRequest` (`@Min(1) @Max(5)` rating) + `DiaryServiceImpl.checkDate()` (future date / not released → 400) |
-| Save, remove from watchlist, notification | `DiaryServiceImpl.create()` → `WatchlistService.remove()` → `DiaryEntryLoggedEvent` → `NotificationEventListener.onDiaryEntryLogged()` |
-| Edit / delete entry | `DiaryServiceImpl.update()` (notifies only when the first review is added) / `delete()` |
+| โหลดข้อมูลหนัง ถ้าไม่พบให้ตอบ 404 | `MovieQueryServiceImpl.getDetail()` → `ResourceNotFoundException` |
+| เปิด / ปิดปุ่มตามสถานะการฉาย | `static/js/pages/movie.js` (ปุ่ม Watched / Rate / Review จะเป็น `off` เมื่อหนังยังไม่ฉาย ส่วนปุ่ม Remind me จะเป็น `off` เมื่อหนังฉายแล้ว) |
+| กด Like / Watchlist สลับเปิดปิด | `LikeController`, `WatchlistController` (`PUT` / `DELETE`) |
+| เพิ่มลงคอลเลกชัน | `components/collect-modal.js` → `CollectionController.addMovie()` / `removeMovie()` |
+| ตั้งเตือน ถ้าถึงกำหนดแล้วให้ส่งทันที | `ReminderServiceImpl.save()` → `ReminderDispatchService.dispatchIfDue()` |
+| ลบการเตือน | `components/remind-modal.js` (ปุ่ม "Remove reminder" แสดงเฉพาะเมื่อมีการเตือนอยู่แล้ว) → `ReminderController.cancel()` → `ReminderServiceImpl.cancel()` |
+| ลูปตรวจสอบข้อมูล | `DiaryEntryRequest` (rating ใช้ `@Min(1) @Max(5)`) + `DiaryServiceImpl.checkDate()` (วันที่ในอนาคต / หนังยังไม่ฉาย → 400) |
+| บันทึก, เอาออกจาก watchlist, สร้างการแจ้งเตือน | `DiaryServiceImpl.create()` → `WatchlistService.remove()` → `DiaryEntryLoggedEvent` → `NotificationEventListener.onDiaryEntryLogged()` |
+| แก้ไข / ลบรายการ | `DiaryServiceImpl.update()` (แจ้งเตือนเฉพาะตอนเพิ่มรีวิวครั้งแรก) / `delete()` |

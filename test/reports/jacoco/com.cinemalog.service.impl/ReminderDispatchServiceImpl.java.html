@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReminderDispatchServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cinema-log</a> &gt; <a href="index.source.html" class="el_package">com.cinemalog.service.impl</a> &gt; <span class="el_source">ReminderDispatchServiceImpl.java</span></div><h1>ReminderDispatchServiceImpl.java</h1><pre class="source lang-java linenums">package com.cinemalog.service.impl;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+
+import com.cinemalog.domain.entity.Reminder;
+import com.cinemalog.domain.enums.ReminderStatus;
+import com.cinemalog.domain.event.ReminderDueEvent;
+import com.cinemalog.repository.ReminderRepository;
+import com.cinemalog.service.ReminderDispatchService;
+
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+public class ReminderDispatchServiceImpl implements ReminderDispatchService {
+
+    private final ReminderRepository reminderRepository;
+    private final ApplicationEventPublisher publisher;
+    private final Clock clock;
+
+<span class="fc" id="L26">    public ReminderDispatchServiceImpl(ReminderRepository reminderRepository, ApplicationEventPublisher publisher, Clock clock) {</span>
+<span class="fc" id="L27">        this.reminderRepository = reminderRepository;</span>
+<span class="fc" id="L28">        this.publisher = publisher;</span>
+<span class="fc" id="L29">        this.clock = clock;</span>
+<span class="fc" id="L30">    }</span>
+
+    @Override
+    @Transactional
+    public int dispatchDueReminders() {
+<span class="fc" id="L35">        LocalDate today = LocalDate.now(clock);</span>
+<span class="fc" id="L36">        List&lt;Reminder&gt; due = reminderRepository.findByStatusAndReminderDateLessThanEqual(ReminderStatus.SCHEDULED, today);</span>
+<span class="fc" id="L37">        due.forEach(r -&gt; send(r, today));</span>
+<span class="fc" id="L38">        return due.size();</span>
+    }
+
+    @Override
+    @Transactional
+    public boolean dispatchIfDue(Reminder reminder) {
+<span class="fc" id="L44">        LocalDate today = LocalDate.now(clock);</span>
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">        if (!reminder.isDueOn(today)) {</span>
+<span class="fc" id="L46">            return false;</span>
+        }
+<span class="nc" id="L48">        send(reminder, today);</span>
+<span class="nc" id="L49">        return true;</span>
+    }
+
+    private void send(Reminder reminder, LocalDate today) {
+<span class="fc" id="L53">        long daysLeft = ChronoUnit.DAYS.between(today, reminder.getMovie().getReleaseDate());</span>
+<span class="fc" id="L54">        publisher.publishEvent(new ReminderDueEvent(reminder.getId(), reminder.getUser().getId(),</span>
+<span class="fc" id="L55">                reminder.getMovie().getId(), message(reminder.getMovie().getTitle(), daysLeft), reminder.getChannel()));</span>
+<span class="fc" id="L56">        reminder.markSent(Instant.now(clock));</span>
+<span class="fc" id="L57">    }</span>
+
+    static String message(String title, long daysLeft) {
+<span class="fc bfc" id="L60" title="All 2 branches covered.">        if (daysLeft &lt;= 0) {</span>
+<span class="fc" id="L61">            return title + &quot; is out today.&quot;;</span>
+        }
+<span class="fc bfc" id="L63" title="All 2 branches covered.">        if (daysLeft == 1) {</span>
+<span class="fc" id="L64">            return title + &quot; releases tomorrow.&quot;;</span>
+        }
+<span class="fc" id="L66">        return title + &quot; releases in &quot; + daysLeft + &quot; days.&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

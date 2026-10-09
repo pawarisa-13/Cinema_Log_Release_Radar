@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MovieSpecificationBuilder.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cinema-log</a> &gt; <a href="index.source.html" class="el_package">com.cinemalog.repository.specification</a> &gt; <span class="el_source">MovieSpecificationBuilder.java</span></div><h1>MovieSpecificationBuilder.java</h1><pre class="source lang-java linenums">package com.cinemalog.repository.specification;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+import com.cinemalog.domain.entity.Genre;
+import com.cinemalog.domain.entity.Movie;
+
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
+
+import org.springframework.data.jpa.domain.Specification;
+
+public final class MovieSpecificationBuilder {
+
+<span class="fc" id="L19">    public static final List&lt;String&gt; MAIN_LANGUAGES = List.of(&quot;en&quot;, &quot;ja&quot;, &quot;ko&quot;, &quot;th&quot;, &quot;fr&quot;, &quot;es&quot;);</span>
+
+<span class="fc" id="L21">    private final List&lt;Specification&lt;Movie&gt;&gt; parts = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L23">    private MovieSpecificationBuilder() {</span>
+<span class="fc" id="L24">    }</span>
+
+    public static MovieSpecificationBuilder create() {
+<span class="fc" id="L27">        return new MovieSpecificationBuilder();</span>
+    }
+
+    public MovieSpecificationBuilder text(String text) {
+<span class="fc bfc" id="L31" title="All 4 branches covered.">        if (text == null || text.isBlank()) {</span>
+<span class="fc" id="L32">            return this;</span>
+        }
+<span class="fc" id="L34">        String like = &quot;%&quot; + text.trim().toLowerCase(Locale.ROOT) + &quot;%&quot;;</span>
+<span class="pc" id="L35">        parts.add((root, query, cb) -&gt; cb.or(</span>
+<span class="nc" id="L36">                cb.like(cb.lower(root.&lt;String&gt;get(&quot;title&quot;)), like),</span>
+<span class="nc" id="L37">                cb.like(cb.lower(root.&lt;String&gt;get(&quot;originalTitle&quot;)), like),</span>
+<span class="nc" id="L38">                cb.like(cb.lower(root.&lt;String&gt;get(&quot;director&quot;)), like),</span>
+<span class="nc" id="L39">                cb.like(cb.lower(root.&lt;String&gt;get(&quot;castNames&quot;)), like)));</span>
+<span class="fc" id="L40">        return this;</span>
+    }
+
+    public MovieSpecificationBuilder genre(Integer genreId) {
+<span class="fc bfc" id="L44" title="All 2 branches covered.">        if (genreId == null) {</span>
+<span class="fc" id="L45">            return this;</span>
+        }
+<span class="fc" id="L47">        parts.add((root, query, cb) -&gt; {</span>
+<span class="nc" id="L48">            Subquery&lt;Long&gt; sub = query.subquery(Long.class);</span>
+<span class="nc" id="L49">            Root&lt;Movie&gt; m = sub.from(Movie.class);</span>
+<span class="nc" id="L50">            Join&lt;Movie, Genre&gt; g = m.join(&quot;genres&quot;);</span>
+<span class="nc" id="L51">            sub.select(m.&lt;Long&gt;get(&quot;id&quot;)).where(cb.equal(m.get(&quot;id&quot;), root.get(&quot;id&quot;)), cb.equal(g.get(&quot;id&quot;), genreId));</span>
+<span class="nc" id="L52">            return cb.exists(sub);</span>
+        });
+<span class="fc" id="L54">        return this;</span>
+    }
+
+    public MovieSpecificationBuilder year(Integer year) {
+<span class="pc bpc" id="L58" title="1 of 2 branches missed.">        if (year == null) {</span>
+<span class="fc" id="L59">            return this;</span>
+        }
+<span class="nc" id="L61">        return releasedBetween(LocalDate.of(year, 1, 1), LocalDate.of(year, 12, 31));</span>
+    }
+
+    public MovieSpecificationBuilder decade(Integer firstYear) {
+<span class="fc bfc" id="L65" title="All 2 branches covered.">        if (firstYear == null) {</span>
+<span class="fc" id="L66">            return this;</span>
+        }
+<span class="fc" id="L68">        int start = firstYear - Math.floorMod(firstYear, 10);</span>
+<span class="fc" id="L69">        return releasedBetween(LocalDate.of(start, 1, 1), LocalDate.of(start + 9, 12, 31));</span>
+    }
+
+    public MovieSpecificationBuilder releasedBefore(Integer year) {
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">        if (year == null) {</span>
+<span class="fc" id="L74">            return this;</span>
+        }
+<span class="nc" id="L76">        LocalDate limit = LocalDate.of(year, 1, 1);</span>
+<span class="nc" id="L77">        parts.add((root, query, cb) -&gt; cb.lessThan(root.&lt;LocalDate&gt;get(&quot;releaseDate&quot;), limit));</span>
+<span class="nc" id="L78">        return this;</span>
+    }
+
+    public MovieSpecificationBuilder minRating(Double rating) {
+<span class="fc bfc" id="L82" title="All 4 branches covered.">        if (rating == null || rating &lt;= 0) {</span>
+<span class="fc" id="L83">            return this;</span>
+        }
+<span class="pc" id="L85">        parts.add((root, query, cb) -&gt; cb.greaterThanOrEqualTo(root.&lt;Double&gt;get(&quot;voteAverage&quot;), rating));</span>
+<span class="fc" id="L86">        return this;</span>
+    }
+
+    public MovieSpecificationBuilder language(String language) {
+<span class="fc bfc" id="L90" title="All 4 branches covered.">        if (language == null || language.isBlank()) {</span>
+<span class="fc" id="L91">            return this;</span>
+        }
+<span class="fc" id="L93">        String lang = language.trim().toLowerCase(Locale.ROOT);</span>
+<span class="pc bpc" id="L94" title="1 of 2 branches missed.">        if (&quot;other&quot;.equals(lang)) {</span>
+<span class="pc" id="L95">            parts.add((root, query, cb) -&gt; cb.not(root.&lt;String&gt;get(&quot;originalLanguage&quot;).in(MAIN_LANGUAGES)));</span>
+<span class="fc" id="L96">        } else {</span>
+<span class="nc" id="L97">            parts.add((root, query, cb) -&gt; cb.equal(root.get(&quot;originalLanguage&quot;), lang));</span>
+        }
+<span class="fc" id="L99">        return this;</span>
+    }
+
+    public Specification&lt;Movie&gt; build() {
+<span class="pc" id="L103">        return parts.stream().reduce(Specification::and).orElse((root, query, cb) -&gt; cb.conjunction());</span>
+    }
+
+    int size() {
+<span class="fc" id="L107">        return parts.size();</span>
+    }
+
+    private MovieSpecificationBuilder releasedBetween(LocalDate from, LocalDate to) {
+<span class="pc" id="L111">        parts.add((root, query, cb) -&gt; cb.between(root.&lt;LocalDate&gt;get(&quot;releaseDate&quot;), from, to));</span>
+<span class="fc" id="L112">        return this;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

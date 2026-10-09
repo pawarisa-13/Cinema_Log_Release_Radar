@@ -1,2 +1,2 @@
-Put the presentation slides here (PDF or PPTX) before submission.
-Suggested order: problem → demo → architecture → database → SOLID → patterns → tests → deployment → who did what.
+ใส่สไลด์นำเสนอไว้ที่นี่ (PDF หรือ PPTX) ก่อนส่งงาน
+ลำดับที่แนะนำ: ปัญหา → demo → สถาปัตยกรรม → ฐานข้อมูล → SOLID → patterns → เทสต์ → deployment → ใครทำส่วนไหน

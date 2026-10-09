@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DiaryMapper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cinema-log</a> &gt; <a href="index.source.html" class="el_package">com.cinemalog.mapper</a> &gt; <span class="el_source">DiaryMapper.java</span></div><h1>DiaryMapper.java</h1><pre class="source lang-java linenums">package com.cinemalog.mapper;
+
+import com.cinemalog.domain.entity.UserProfile;
+import com.cinemalog.domain.entity.WatchedMovie;
+import com.cinemalog.dto.response.DiaryEntryResponse;
+import com.cinemalog.dto.response.ReviewResponse;
+
+import org.springframework.stereotype.Component;
+
+@Component
+public class DiaryMapper {
+
+    private final MovieMapper movieMapper;
+
+<span class="nc" id="L15">    public DiaryMapper(MovieMapper movieMapper) {</span>
+<span class="nc" id="L16">        this.movieMapper = movieMapper;</span>
+<span class="nc" id="L17">    }</span>
+
+    public DiaryEntryResponse toResponse(WatchedMovie w) {
+<span class="nc" id="L20">        return new DiaryEntryResponse(w.getId(), movieMapper.toSummary(w.getMovie()), w.getWatchedDate(),</span>
+<span class="nc" id="L21">                w.getRating(), w.getReview(), w.getPlace(), w.getCreatedAt(), w.getUpdatedAt());</span>
+    }
+
+    public ReviewResponse toReview(WatchedMovie w, Long viewerId) {
+<span class="nc" id="L25">        UserProfile p = w.getUser().getProfile();</span>
+<span class="nc bnc" id="L26" title="All 4 branches missed.">        boolean mine = viewerId != null &amp;&amp; viewerId.equals(w.getUser().getId());</span>
+<span class="nc" id="L27">        return new ReviewResponse(w.getId(), p.getDisplayName(), p.getAvatarStyle(), p.getAvatarColor(),</span>
+<span class="nc" id="L28">                w.getRating(), w.getReview(), w.getWatchedDate(), mine);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

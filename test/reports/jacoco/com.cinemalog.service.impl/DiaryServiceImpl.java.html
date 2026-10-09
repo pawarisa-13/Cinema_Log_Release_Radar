@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DiaryServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cinema-log</a> &gt; <a href="index.source.html" class="el_package">com.cinemalog.service.impl</a> &gt; <span class="el_source">DiaryServiceImpl.java</span></div><h1>DiaryServiceImpl.java</h1><pre class="source lang-java linenums">package com.cinemalog.service.impl;
+
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.List;
+
+import com.cinemalog.domain.entity.Movie;
+import com.cinemalog.domain.entity.WatchedMovie;
+import com.cinemalog.domain.event.DiaryEntryLoggedEvent;
+import com.cinemalog.dto.request.DiaryEntryRequest;
+import com.cinemalog.dto.request.UpdateDiaryEntryRequest;
+import com.cinemalog.dto.response.DiaryEntryResponse;
+import com.cinemalog.dto.response.PageResponse;
+import com.cinemalog.exception.BusinessRuleException;
+import com.cinemalog.exception.ResourceNotFoundException;
+import com.cinemalog.mapper.DiaryMapper;
+import com.cinemalog.repository.MovieRepository;
+import com.cinemalog.repository.UserRepository;
+import com.cinemalog.repository.WatchedMovieRepository;
+import com.cinemalog.service.DiaryCommandService;
+import com.cinemalog.service.DiaryQueryService;
+import com.cinemalog.service.WatchlistService;
+
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional(readOnly = true)
+public class DiaryServiceImpl implements DiaryQueryService, DiaryCommandService {
+
+    private final WatchedMovieRepository watchedMovieRepository;
+    private final MovieRepository movieRepository;
+    private final UserRepository userRepository;
+    private final WatchlistService watchlistService;
+    private final ApplicationEventPublisher publisher;
+    private final DiaryMapper diaryMapper;
+    private final Clock clock;
+
+<span class="fc" id="L43">    public DiaryServiceImpl(WatchedMovieRepository watchedMovieRepository, MovieRepository movieRepository,</span>
+                            UserRepository userRepository, WatchlistService watchlistService,
+                            ApplicationEventPublisher publisher, DiaryMapper diaryMapper, Clock clock) {
+<span class="fc" id="L46">        this.watchedMovieRepository = watchedMovieRepository;</span>
+<span class="fc" id="L47">        this.movieRepository = movieRepository;</span>
+<span class="fc" id="L48">        this.userRepository = userRepository;</span>
+<span class="fc" id="L49">        this.watchlistService = watchlistService;</span>
+<span class="fc" id="L50">        this.publisher = publisher;</span>
+<span class="fc" id="L51">        this.diaryMapper = diaryMapper;</span>
+<span class="fc" id="L52">        this.clock = clock;</span>
+<span class="fc" id="L53">    }</span>
+
+    @Override
+    public PageResponse&lt;DiaryEntryResponse&gt; list(Long userId, Pageable pageable) {
+<span class="nc" id="L57">        Page&lt;WatchedMovie&gt; page = watchedMovieRepository.findByUserId(userId, pageable);</span>
+<span class="nc" id="L58">        return PageResponse.of(page, page.getContent().stream().map(diaryMapper::toResponse).toList());</span>
+    }
+
+    @Override
+    public List&lt;DiaryEntryResponse&gt; month(Long userId, YearMonth month) {
+<span class="nc" id="L63">        return between(userId, month.atDay(1), month.atEndOfMonth());</span>
+    }
+
+    @Override
+    public List&lt;DiaryEntryResponse&gt; day(Long userId, LocalDate date) {
+<span class="nc" id="L68">        return between(userId, date, date);</span>
+    }
+
+    @Override
+    public DiaryEntryResponse get(Long userId, Long entryId) {
+<span class="nc" id="L73">        return diaryMapper.toResponse(load(userId, entryId));</span>
+    }
+
+    @Override
+    @Transactional
+    public DiaryEntryResponse create(Long userId, DiaryEntryRequest request) {
+<span class="fc" id="L79">        Movie movie = movieRepository.findById(request.movieId())</span>
+<span class="pc" id="L80">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Movie &quot; + request.movieId() + &quot; was not found.&quot;));</span>
+<span class="fc" id="L81">        checkDate(movie, request.watchedDate());</span>
+<span class="fc" id="L82">        WatchedMovie entry = watchedMovieRepository.save(new WatchedMovie(userRepository.getReferenceById(userId), movie,</span>
+<span class="fc" id="L83">                request.watchedDate(), request.rating(), request.review(), request.place()));</span>
+<span class="fc" id="L84">        watchlistService.remove(userId, movie.getId());</span>
+<span class="fc" id="L85">        publisher.publishEvent(new DiaryEntryLoggedEvent(userId, movie.getId(), movie.getTitle(), entry.hasReview()));</span>
+<span class="fc" id="L86">        return diaryMapper.toResponse(entry);</span>
+    }
+
+    @Override
+    @Transactional
+    public DiaryEntryResponse update(Long userId, Long entryId, UpdateDiaryEntryRequest request) {
+<span class="fc" id="L92">        WatchedMovie entry = load(userId, entryId);</span>
+<span class="fc" id="L93">        checkDate(entry.getMovie(), request.watchedDate());</span>
+<span class="fc" id="L94">        boolean hadReview = entry.hasReview();</span>
+<span class="fc" id="L95">        entry.update(request.watchedDate(), request.rating(), request.review(), request.place());</span>
+<span class="pc bpc" id="L96" title="2 of 4 branches missed.">        if (!hadReview &amp;&amp; entry.hasReview()) {</span>
+<span class="nc" id="L97">            publisher.publishEvent(new DiaryEntryLoggedEvent(userId, entry.getMovie().getId(), entry.getMovie().getTitle(), true));</span>
+        }
+<span class="fc" id="L99">        return diaryMapper.toResponse(entry);</span>
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long userId, Long entryId) {
+<span class="nc" id="L105">        watchedMovieRepository.delete(load(userId, entryId));</span>
+<span class="nc" id="L106">    }</span>
+
+    private List&lt;DiaryEntryResponse&gt; between(Long userId, LocalDate from, LocalDate to) {
+<span class="nc" id="L109">        return watchedMovieRepository.findByUserIdAndWatchedDateBetweenOrderByWatchedDateAscIdAsc(userId, from, to)</span>
+<span class="nc" id="L110">                .stream().map(diaryMapper::toResponse).toList();</span>
+    }
+
+    private WatchedMovie load(Long userId, Long entryId) {
+<span class="fc" id="L114">        return watchedMovieRepository.findByIdAndUserId(entryId, userId)</span>
+<span class="fc" id="L115">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Diary entry &quot; + entryId + &quot; was not found.&quot;));</span>
+    }
+
+    void checkDate(Movie movie, LocalDate watchedDate) {
+<span class="fc" id="L119">        LocalDate today = LocalDate.now(clock);</span>
+<span class="fc bfc" id="L120" title="All 2 branches covered.">        if (watchedDate.isAfter(today)) {</span>
+<span class="fc" id="L121">            throw new BusinessRuleException(&quot;That date is in the future. Pick today or earlier.&quot;);</span>
+        }
+<span class="pc bpc" id="L123" title="1 of 4 branches missed.">        if (movie.getReleaseDate() != null &amp;&amp; movie.getReleaseDate().isAfter(today)) {</span>
+<span class="fc" id="L124">            throw new BusinessRuleException(movie.getTitle() + &quot; isn't out until &quot; + movie.getReleaseDate() + &quot;.&quot;);</span>
+        }
+<span class="fc" id="L126">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TmdbMovieCatalogAdapter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cinema-log</a> &gt; <a href="index.source.html" class="el_package">com.cinemalog.service.external.tmdb</a> &gt; <span class="el_source">TmdbMovieCatalogAdapter.java</span></div><h1>TmdbMovieCatalogAdapter.java</h1><pre class="source lang-java linenums">package com.cinemalog.service.external.tmdb;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+
+import com.cinemalog.config.TmdbProperties;
+import com.cinemalog.domain.enums.MovieListType;
+import com.cinemalog.domain.model.ExternalMovie;
+import com.cinemalog.dto.external.tmdb.TmdbCreditsDto;
+import com.cinemalog.dto.external.tmdb.TmdbGenreDto;
+import com.cinemalog.dto.external.tmdb.TmdbMovieDetailsDto;
+import com.cinemalog.dto.external.tmdb.TmdbMovieDto;
+import com.cinemalog.dto.external.tmdb.TmdbPageDto;
+import com.cinemalog.service.external.MovieCatalogSource;
+
+import org.springframework.stereotype.Component;
+
+@Component
+public class TmdbMovieCatalogAdapter implements MovieCatalogSource {
+
+    private static final int MAX_CAST = 6;
+<span class="fc" id="L29">    private static final Map&lt;MovieListType, String&gt; PATHS = new EnumMap&lt;&gt;(Map.of(</span>
+<span class="fc" id="L30">            MovieListType.NOW_PLAYING, &quot;/movie/now_playing&quot;,</span>
+<span class="fc" id="L31">            MovieListType.UPCOMING, &quot;/movie/upcoming&quot;,</span>
+<span class="fc" id="L32">            MovieListType.POPULAR, &quot;/movie/popular&quot;,</span>
+<span class="fc" id="L33">            MovieListType.TOP_RATED, &quot;/movie/top_rated&quot;));</span>
+
+    private final TmdbClient client;
+    private final TmdbProperties properties;
+
+<span class="fc" id="L38">    public TmdbMovieCatalogAdapter(TmdbClient client, TmdbProperties properties) {</span>
+<span class="fc" id="L39">        this.client = client;</span>
+<span class="fc" id="L40">        this.properties = properties;</span>
+<span class="fc" id="L41">    }</span>
+
+    @Override
+    public boolean isAvailable() {
+<span class="fc" id="L45">        return properties.hasApiKey();</span>
+    }
+
+    @Override
+    public List&lt;ExternalMovie&gt; fetchList(MovieListType type, int page) {
+<span class="fc" id="L50">        return fromPage(client.list(PATHS.get(type), page));</span>
+    }
+
+    @Override
+    public List&lt;ExternalMovie&gt; search(String query) {
+<span class="nc" id="L55">        return fromPage(client.search(query));</span>
+    }
+
+    @Override
+    public Optional&lt;ExternalMovie&gt; fetchDetails(long externalId) {
+<span class="fc" id="L60">        return Optional.ofNullable(client.details(externalId)).map(TmdbMovieCatalogAdapter::fromDetails);</span>
+    }
+
+    @Override
+    public Map&lt;Integer, String&gt; fetchGenres() {
+<span class="nc" id="L65">        Map&lt;Integer, String&gt; out = new LinkedHashMap&lt;&gt;();</span>
+<span class="nc" id="L66">        var list = client.genres();</span>
+<span class="nc bnc" id="L67" title="All 4 branches missed.">        if (list != null &amp;&amp; list.genres() != null) {</span>
+<span class="nc" id="L68">            list.genres().forEach(g -&gt; out.put(g.id(), g.name()));</span>
+        }
+<span class="nc" id="L70">        return out;</span>
+    }
+
+    private static List&lt;ExternalMovie&gt; fromPage(TmdbPageDto page) {
+<span class="pc bpc" id="L74" title="2 of 4 branches missed.">        if (page == null || page.results() == null) {</span>
+<span class="nc" id="L75">            return List.of();</span>
+        }
+<span class="pc bpc" id="L77" title="2 of 4 branches missed.">        return page.results().stream().filter(m -&gt; m.id() != null &amp;&amp; m.title() != null)</span>
+<span class="fc" id="L78">                .map(TmdbMovieCatalogAdapter::fromSummary).toList();</span>
+    }
+
+    static ExternalMovie fromSummary(TmdbMovieDto m) {
+<span class="fc" id="L82">        return new ExternalMovie(m.id(), m.title(), m.originalTitle(), m.overview(), m.posterPath(), m.backdropPath(),</span>
+<span class="fc" id="L83">                parseDate(m.releaseDate()), m.voteAverage(), m.popularity(), m.originalLanguage(),</span>
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">                m.genreIds() == null ? List.of() : m.genreIds(), null, null, null);</span>
+    }
+
+    static ExternalMovie fromDetails(TmdbMovieDetailsDto d) {
+<span class="fc" id="L88">        TmdbCreditsDto credits = d.credits();</span>
+<span class="pc bpc" id="L89" title="2 of 4 branches missed.">        String director = credits == null || credits.crew() == null ? null</span>
+<span class="fc" id="L90">                : credits.crew().stream()</span>
+<span class="fc" id="L91">                        .filter(p -&gt; &quot;Director&quot;.equals(p.job())).map(TmdbCreditsDto.Person::name).findFirst()</span>
+<span class="fc" id="L92">                        .orElse(null);</span>
+<span class="pc bpc" id="L93" title="2 of 4 branches missed.">        List&lt;String&gt; cast = credits == null || credits.cast() == null ? List.of()</span>
+<span class="fc" id="L94">                : credits.cast().stream()</span>
+<span class="fc" id="L95">                        .sorted(Comparator.comparing(</span>
+<span class="pc bpc" id="L96" title="1 of 2 branches missed.">                                (TmdbCreditsDto.Person p) -&gt; p.order() == null ? Integer.MAX_VALUE : p.order()))</span>
+<span class="fc" id="L97">                        .map(TmdbCreditsDto.Person::name).filter(Objects::nonNull).limit(MAX_CAST).toList();</span>
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">        List&lt;Integer&gt; genreIds = d.genres() == null ? List.of() : d.genres().stream().map(TmdbGenreDto::id).toList();</span>
+<span class="fc" id="L99">        return new ExternalMovie(d.id(), d.title(), d.originalTitle(), d.overview(), d.posterPath(), d.backdropPath(),</span>
+<span class="fc" id="L100">                parseDate(d.releaseDate()), d.voteAverage(), d.popularity(), d.originalLanguage(), genreIds,</span>
+<span class="fc" id="L101">                d.runtime(), director, cast);</span>
+    }
+
+    static LocalDate parseDate(String value) {
+<span class="pc bpc" id="L105" title="1 of 4 branches missed.">        if (value == null || value.isBlank()) {</span>
+<span class="fc" id="L106">            return null;</span>
+        }
+        try {
+<span class="fc" id="L109">            return LocalDate.parse(value);</span>
+<span class="nc" id="L110">        } catch (DateTimeParseException ex) {</span>
+<span class="nc" id="L111">            return null;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MovieMapper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cinema-log</a> &gt; <a href="index.source.html" class="el_package">com.cinemalog.mapper</a> &gt; <span class="el_source">MovieMapper.java</span></div><h1>MovieMapper.java</h1><pre class="source lang-java linenums">package com.cinemalog.mapper;
+
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
+import java.util.List;
+
+import com.cinemalog.config.TmdbProperties;
+import com.cinemalog.domain.entity.Genre;
+import com.cinemalog.domain.entity.Movie;
+import com.cinemalog.dto.response.GenreResponse;
+import com.cinemalog.dto.response.MovieDetailResponse;
+import com.cinemalog.dto.response.MovieSummaryResponse;
+
+import org.springframework.stereotype.Component;
+
+@Component
+public class MovieMapper {
+
+    private final TmdbProperties tmdb;
+    private final Clock clock;
+
+<span class="nc" id="L24">    public MovieMapper(TmdbProperties tmdb, Clock clock) {</span>
+<span class="nc" id="L25">        this.tmdb = tmdb;</span>
+<span class="nc" id="L26">        this.clock = clock;</span>
+<span class="nc" id="L27">    }</span>
+
+    public MovieSummaryResponse toSummary(Movie m) {
+<span class="nc" id="L30">        LocalDate today = LocalDate.now(clock);</span>
+<span class="nc" id="L31">        return new MovieSummaryResponse(m.getId(), m.getTmdbId(), m.getTitle(), year(m), m.getReleaseDate(),</span>
+<span class="nc" id="L32">                tmdb.imageUrl(&quot;w500&quot;, m.getPosterPath()), round(m.getVoteAverage()), genreNames(m),</span>
+<span class="nc" id="L33">                m.isReleasedBy(today));</span>
+    }
+
+    public List&lt;MovieSummaryResponse&gt; toSummaries(List&lt;Movie&gt; movies) {
+<span class="nc" id="L37">        return movies.stream().map(this::toSummary).toList();</span>
+    }
+
+    public MovieDetailResponse toDetail(Movie m) {
+<span class="nc" id="L41">        LocalDate today = LocalDate.now(clock);</span>
+<span class="nc bnc" id="L42" title="All 2 branches missed.">        long days = m.getReleaseDate() == null ? 0 : ChronoUnit.DAYS.between(today, m.getReleaseDate());</span>
+<span class="nc bnc" id="L43" title="All 4 branches missed.">        String original = (m.getOriginalTitle() != null &amp;&amp; !m.getOriginalTitle().equals(m.getTitle()))</span>
+<span class="nc" id="L44">                ? m.getOriginalTitle()</span>
+<span class="nc" id="L45">                : null;</span>
+<span class="nc" id="L46">        return new MovieDetailResponse(m.getId(), m.getTmdbId(), m.getTitle(), original, year(m), m.getReleaseDate(),</span>
+<span class="nc" id="L47">                m.getRuntime(), m.getOriginalLanguage(), m.getOverview(),</span>
+<span class="nc" id="L48">                tmdb.imageUrl(&quot;w500&quot;, m.getPosterPath()), tmdb.imageUrl(&quot;w1280&quot;, m.getBackdropPath()),</span>
+<span class="nc" id="L49">                round(m.getVoteAverage()), genreNames(m), m.getDirector(), m.getCastList(), m.isReleasedBy(today),</span>
+<span class="nc" id="L50">                days);</span>
+    }
+
+    public GenreResponse toGenre(Genre g) {
+<span class="nc" id="L54">        return new GenreResponse(g.getId(), g.getName());</span>
+    }
+
+    private static Integer year(Movie m) {
+<span class="nc bnc" id="L58" title="All 2 branches missed.">        return m.getReleaseDate() == null ? null : m.getReleaseDate().getYear();</span>
+    }
+
+    private static Double round(Double v) {
+<span class="nc bnc" id="L62" title="All 2 branches missed.">        return v == null ? 0.0 : Math.round(v * 10.0) / 10.0;</span>
+    }
+
+    private static List&lt;String&gt; genreNames(Movie m) {
+<span class="nc" id="L66">        return m.getGenres().stream().sorted(Comparator.comparing(Genre::getId)).map(Genre::getName).toList();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
