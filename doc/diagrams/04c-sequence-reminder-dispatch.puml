@@ -1,0 +1,45 @@
+@startuml
+!include _style.iuml
+skinparam sequenceMessageAlign left
+skinparam ParticipantPadding 12
+skinparam BoxPadding 10
+hide footbox
+title Sequence Diagram 2 (part 2 of 2) — ReminderJob delivers due reminders
+
+autonumber 24
+participant "ReminderJob" as Job
+participant "ReminderDispatchServiceImpl" as D
+participant "ReminderRepository" as RR
+participant "ApplicationEventPublisher" as P
+participant "NotificationEventListener" as L
+participant "NotificationSenderFactory" as F
+participant "EmailNotificationSender" as E
+participant "NotificationRepository" as NR
+database "PostgreSQL" as DB
+participant "SMTP server" as M
+  note over Job : on startup and every hour (app.reminder-cron)
+  Job -> D ++ : dispatchDueReminders()
+  D -> RR : findByStatusAndReminderDateLessThanEqual(SCHEDULED, today)
+  RR -> DB : SELECT reminders
+  RR --> D : due reminders
+  loop each due reminder
+    D -> P : publishEvent(ReminderDueEvent)
+    P -> L ++ : onReminderDue(event)
+    L -> F : forChannel(EMAIL)
+    F --> L : EmailNotificationSender
+    L -> E : send(message) [Template Method, final]
+    E -> E : load User / Movie (UserRepository, MovieRepository)
+    E -> E : deliver(user, message)
+    alt mail server configured
+      E -> M : SimpleMailMessage
+    else spring.mail.host empty
+      E -> E : log "Email not configured"
+    end
+    E -> NR : save(new Notification(...))
+    NR -> DB : INSERT notifications
+    L --> P -- : return
+    P --> D : return
+    D -> D : reminder.markSent(now) — State: SCHEDULED → SENT
+  end
+  D --> Job -- : number sent
+@enduml

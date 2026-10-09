@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReminderServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cinema-log</a> &gt; <a href="index.source.html" class="el_package">com.cinemalog.service.impl</a> &gt; <span class="el_source">ReminderServiceImpl.java</span></div><h1>ReminderServiceImpl.java</h1><pre class="source lang-java linenums">package com.cinemalog.service.impl;
+
+import java.time.Clock;
+import java.time.LocalDate;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
+
+import com.cinemalog.domain.entity.Movie;
+import com.cinemalog.domain.entity.Reminder;
+import com.cinemalog.domain.enums.ReminderStatus;
+import com.cinemalog.dto.request.ReminderRequest;
+import com.cinemalog.dto.response.ReminderResponse;
+import com.cinemalog.exception.BusinessRuleException;
+import com.cinemalog.exception.ResourceNotFoundException;
+import com.cinemalog.mapper.ReminderMapper;
+import com.cinemalog.repository.MovieRepository;
+import com.cinemalog.repository.ReminderRepository;
+import com.cinemalog.repository.UserRepository;
+import com.cinemalog.service.ReminderDispatchService;
+import com.cinemalog.service.ReminderService;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional(readOnly = true)
+public class ReminderServiceImpl implements ReminderService {
+
+<span class="fc" id="L30">    static final Set&lt;Integer&gt; ALLOWED_OFFSETS = Set.of(0, 1, 3, 7);</span>
+
+    private final ReminderRepository reminderRepository;
+    private final MovieRepository movieRepository;
+    private final UserRepository userRepository;
+    private final ReminderDispatchService dispatchService;
+    private final ReminderMapper reminderMapper;
+    private final Clock clock;
+
+<span class="fc" id="L39">    public ReminderServiceImpl(ReminderRepository reminderRepository, MovieRepository movieRepository,</span>
+                               UserRepository userRepository, ReminderDispatchService dispatchService,
+                               ReminderMapper reminderMapper, Clock clock) {
+<span class="fc" id="L42">        this.reminderRepository = reminderRepository;</span>
+<span class="fc" id="L43">        this.movieRepository = movieRepository;</span>
+<span class="fc" id="L44">        this.userRepository = userRepository;</span>
+<span class="fc" id="L45">        this.dispatchService = dispatchService;</span>
+<span class="fc" id="L46">        this.reminderMapper = reminderMapper;</span>
+<span class="fc" id="L47">        this.clock = clock;</span>
+<span class="fc" id="L48">    }</span>
+
+    @Override
+    public List&lt;ReminderResponse&gt; listActive(Long userId) {
+<span class="nc" id="L52">        LocalDate today = LocalDate.now(clock);</span>
+<span class="nc" id="L53">        return reminderRepository</span>
+<span class="nc" id="L54">                .findByUserIdAndStatusInOrderByReminderDateAsc(userId, EnumSet.of(ReminderStatus.SCHEDULED, ReminderStatus.SENT))</span>
+<span class="nc" id="L55">                .stream()</span>
+<span class="nc bnc" id="L56" title="All 2 branches missed.">                .filter(r -&gt; !r.getMovie().getReleaseDate().isBefore(today))</span>
+<span class="nc" id="L57">                .map(reminderMapper::toResponse)</span>
+<span class="nc" id="L58">                .toList();</span>
+    }
+
+    @Override
+    @Transactional
+    public ReminderResponse save(Long userId, Long movieId, ReminderRequest request) {
+<span class="fc bfc" id="L64" title="All 2 branches covered.">        if (!ALLOWED_OFFSETS.contains(request.offsetDays())) {</span>
+<span class="fc" id="L65">            throw new BusinessRuleException(&quot;Pick 7, 3, 1 or 0 days before release.&quot;);</span>
+        }
+<span class="fc" id="L67">        Movie movie = movieRepository.findById(movieId)</span>
+<span class="pc" id="L68">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Movie &quot; + movieId + &quot; was not found.&quot;));</span>
+<span class="fc" id="L69">        LocalDate today = LocalDate.now(clock);</span>
+<span class="pc bpc" id="L70" title="1 of 4 branches missed.">        if (movie.getReleaseDate() == null || !movie.getReleaseDate().isAfter(today)) {</span>
+<span class="fc" id="L71">            throw new BusinessRuleException(movie.getTitle() + &quot; is already out, so there is nothing to remind you about.&quot;);</span>
+        }
+<span class="fc" id="L73">        Reminder reminder = reminderRepository.findByUserIdAndMovieId(userId, movieId)</span>
+<span class="fc" id="L74">                .map(existing -&gt; {</span>
+<span class="fc" id="L75">                    existing.reschedule(request.offsetDays(), request.channel());</span>
+<span class="fc" id="L76">                    return existing;</span>
+                })
+<span class="fc" id="L78">                .orElseGet(() -&gt; reminderRepository.save(</span>
+<span class="fc" id="L79">                        new Reminder(userRepository.getReferenceById(userId), movie, request.offsetDays(), request.channel())));</span>
+<span class="fc" id="L80">        dispatchService.dispatchIfDue(reminder);</span>
+<span class="fc" id="L81">        return reminderMapper.toResponse(reminder);</span>
+    }
+
+    @Override
+    @Transactional
+    public void cancel(Long userId, Long movieId) {
+<span class="pc" id="L87">        Reminder reminder = reminderRepository.findByUserIdAndMovieId(userId, movieId)</span>
+<span class="pc" id="L88">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;You have no reminder for this movie.&quot;));</span>
+<span class="nc" id="L89">        reminder.cancel();</span>
+<span class="nc" id="L90">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

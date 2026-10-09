@@ -1,0 +1,57 @@
+@startuml
+!include _style.iuml
+title Deployment Diagram — Cinema Log & Release Radar
+left to right direction
+
+package "CURRENT deployment (what runs today — development only)" as current {
+  node "Developer laptop" <<device>> as laptop {
+    node "Web browser" <<executionEnvironment>> as br1
+    node "JRE 21 (VS Code Java extension;\nproject targets Java 17)" <<executionEnvironment>> as jre {
+      artifact "cinema-log (Spring Boot app)\nhttp://localhost:8080" as appdev
+    }
+  }
+  node "Supabase cloud" <<device>> as supa {
+    node "Session pooler :5432" <<executionEnvironment>> as pooler
+    database "PostgreSQL 17.11\n(version reported in run log)" <<executionEnvironment>> as pg
+  }
+  node "GitHub" <<device>> as gh {
+    artifact "Git repository\n(main, develop, personal branches)" as repo
+    node "GitHub Actions runner\nubuntu-latest, Temurin 17" <<executionEnvironment>> as ci
+  }
+  cloud "TMDB API" as tmdb
+}
+
+br1 --> appdev : HTTP :8080
+appdev --> pooler : JDBC + SSL
+pooler --> pg
+appdev --> tmdb : HTTPS
+laptop --> repo : git push
+repo --> ci : push / PR to main, develop\n(mvn verify)
+
+package "PLANNED deployment (not deployed yet — defined in Dockerfile and ci.yml)" as planned {
+  node "Render.com Web Service" <<device>> as render {
+    node "Docker container\neclipse-temurin:17-jre, TZ Asia/Bangkok" <<executionEnvironment>> as docker {
+      artifact "app.jar\n(built as cinema-log.jar)\n:8080" as appjar
+    }
+  }
+  node "Supabase cloud (production DB)" <<device>> as supa2 {
+    database "PostgreSQL" <<executionEnvironment>> as pg2
+  }
+  node "User device" <<device>> as userdev {
+    node "Web browser" <<executionEnvironment>> as br2
+  }
+  cloud "TMDB API" as tmdb2
+  cloud "SMTP server (optional)" as smtp2
+}
+
+br2 --> appjar : HTTPS
+appjar --> pg2 : JDBC + SSL\n(session pooler :5432)
+appjar --> tmdb2 : HTTPS
+appjar ..> smtp2 : SMTP (only if spring.mail.host is set)
+ci ..> render : deploy hook RENDER_DEPLOY_HOOK\n(push to main only; skipped if secret not set)
+
+note right of render
+  No public URL exists yet. README placeholders
+  https://<your-service>.onrender.com must be filled in after deploying.
+end note
+@enduml

@@ -1,0 +1,254 @@
+@startuml
+!include _style.iuml
+hide circle
+skinparam nodesep 30
+skinparam ranksep 55
+title Cinema Log & Release Radar — Class Diagram overview (all classes; see 03a–03c for readable views)
+
+class MovieController {
+  +search(MovieSearchCriteria) : PageResponse
+  +detail(Long id) : MovieDetailResponse
+  +recommended(int limit) : List
+}
+class DiaryController {
+  +create(DiaryEntryRequest) : ResponseEntity
+  +update(Long id, UpdateDiaryEntryRequest) : DiaryEntryResponse
+  +delete(Long id)
+}
+class CollectionController {
+  +create(CollectionRequest) : ResponseEntity
+  +addMovie(Long id, Long movieId) : CollectionDetailResponse
+}
+class ReminderController {
+  +save(Long movieId, ReminderRequest) : ReminderResponse
+  +cancel(Long movieId)
+}
+class GlobalExceptionHandler {
+  +handleApi(ApiException, HttpServletRequest) : ResponseEntity
+  +handleBodyValidation(MethodArgumentNotValidException, HttpServletRequest) : ResponseEntity
+}
+interface CurrentUserProvider <<interface>> {
+  +currentUserId() : Optional<Long>
+  +requireUserId() : Long
+}
+class SecurityCurrentUserProvider {
+}
+interface MovieQueryService <<interface>> {
+  +search(MovieSearchCriteria) : PageResponse
+  +getDetail(Long movieId) : MovieDetailResponse
+}
+interface MovieDiscoveryService <<interface>> {
+  +recommendedFor(Optional<Long> userId, int limit) : List
+}
+interface MovieSyncService <<interface>> {
+  +syncCatalog() : int
+  +syncGenres() : int
+  +importSearchResults(String query) : int
+  +refreshDetails(Movie movie)
+}
+interface DiaryQueryService <<interface>> {
+  +month(Long userId, YearMonth month) : List
+}
+interface DiaryCommandService <<interface>> {
+  +create(Long userId, DiaryEntryRequest) : DiaryEntryResponse
+  +update(Long userId, Long entryId, UpdateDiaryEntryRequest) : DiaryEntryResponse
+  +delete(Long userId, Long entryId)
+}
+interface WatchlistService <<interface>> {
+  +remove(Long userId, Long movieId)
+}
+interface CollectionService <<interface>> {
+  +create(Long userId, CollectionRequest) : CollectionDetailResponse
+}
+interface ReminderService <<interface>> {
+  +save(Long userId, Long movieId, ReminderRequest) : ReminderResponse
+  +cancel(Long userId, Long movieId)
+}
+interface ReminderDispatchService <<interface>> {
+  +dispatchDueReminders() : int
+  +dispatchIfDue(Reminder) : boolean
+}
+class MovieQueryServiceImpl {
+}
+class MovieSyncServiceImpl {
+}
+class MovieSyncJob {
+  +run()
+}
+class DiaryServiceImpl {
+  ~checkDate(Movie, LocalDate)
+}
+class CollectionServiceImpl {
+}
+class ReminderServiceImpl {
+  ~ALLOWED_OFFSETS : Set<Integer>
+}
+class ReminderDispatchServiceImpl {
+}
+class ReminderJob {
+  +run()
+}
+interface MovieCatalogSource <<interface>> {
+  +isAvailable() : boolean
+  +fetchGenres() : Map<Integer, String>
+  +fetchList(MovieListType, int page) : List<ExternalMovie>
+  +search(String query) : List<ExternalMovie>
+  +fetchDetails(long externalId) : Optional<ExternalMovie>
+}
+class TmdbMovieCatalogAdapter <<Adapter>> {
+}
+class TmdbClient {
+  +list(String path, int page) : TmdbPageDto
+  +search(String query) : TmdbPageDto
+  +details(long tmdbId) : TmdbMovieDetailsDto
+  +genres() : TmdbGenreListDto
+}
+interface ApplicationEventPublisher <<interface>> {
+  +publishEvent(Object event)
+}
+class DiaryEntryLoggedEvent <<record>> {
+  userId
+  movieId
+  movieTitle
+  reviewAdded
+}
+class ReminderDueEvent <<record>> {
+  reminderId
+  userId
+  movieId
+  message
+  channel
+}
+class NotificationEventListener <<Observer>> {
+  +onReminderDue(ReminderDueEvent)
+  +onDiaryEntryLogged(DiaryEntryLoggedEvent)
+}
+class NotificationSenderFactory <<Factory>> {
+  -senders : Map<NotificationChannel, NotificationSender>
+  +forChannel(NotificationChannel) : NotificationSender
+}
+interface NotificationSender <<interface>> <<Strategy>> {
+  +channel() : NotificationChannel
+  +send(NotificationMessage)
+}
+abstract class AbstractNotificationSender <<abstract>> <<Template Method>> {
+  +send(NotificationMessage) {final}
+  {abstract} #deliver(User, NotificationMessage)
+  #recordText(NotificationMessage) : String
+}
+class InAppNotificationSender {
+}
+class EmailNotificationSender {
+}
+class Reminder {
+  -status : ReminderStatus
+  +reschedule(int offsetDays, NotificationChannel)
+  +markSent(Instant)
+  +cancel()
+  +isDueOn(LocalDate) : boolean
+}
+enum ReminderStatus <<enumeration>> <<State>> {
+  SCHEDULED
+  SENT
+  CANCELLED
+  +send() : ReminderStatus
+  +cancel() : ReminderStatus
+  +reschedule() : ReminderStatus
+  +isActive() : boolean
+}
+interface MovieRepository <<interface>> {
+  +findByTmdbId(Long) : Optional<Movie>
+}
+interface UserRepository <<interface>> {
+}
+interface GenreRepository <<interface>> {
+}
+interface WatchedMovieRepository <<interface>> {
+}
+interface MovieCollectionRepository <<interface>> {
+}
+interface ReminderRepository <<interface>> {
+  +findByUserIdAndMovieId(Long, Long) : Optional<Reminder>
+  +findByStatusAndReminderDateLessThanEqual(ReminderStatus, LocalDate) : List<Reminder>
+}
+interface NotificationRepository <<interface>> {
+}
+class MovieSpecificationBuilder <<Builder>> {
+  {static} +create() : MovieSpecificationBuilder
+  +text(String) : MovieSpecificationBuilder
+  +genre(Integer) : MovieSpecificationBuilder
+  +minRating(Double) : MovieSpecificationBuilder
+  +build() : Specification<Movie>
+}
+class ClockConfig <<Singleton>> {
+  +clock(AppProperties) : Clock
+}
+class TmdbClientConfig <<Singleton>> {
+  +tmdbRestClient(TmdbProperties) : RestClient
+}
+class SecurityConfig <<Singleton>> {
+  +passwordEncoder() : PasswordEncoder
+}
+CurrentUserProvider <|.. SecurityCurrentUserProvider
+MovieController --> MovieQueryService
+MovieController --> MovieDiscoveryService
+MovieController --> CurrentUserProvider
+DiaryController --> DiaryQueryService
+DiaryController --> DiaryCommandService
+DiaryController --> CurrentUserProvider
+CollectionController --> CollectionService
+CollectionController --> CurrentUserProvider
+ReminderController --> ReminderService
+ReminderController --> CurrentUserProvider
+MovieQueryService <|.. MovieQueryServiceImpl
+MovieSyncService <|.. MovieSyncServiceImpl
+DiaryQueryService <|.. DiaryServiceImpl
+DiaryCommandService <|.. DiaryServiceImpl
+CollectionService <|.. CollectionServiceImpl
+ReminderService <|.. ReminderServiceImpl
+ReminderDispatchService <|.. ReminderDispatchServiceImpl
+MovieQueryServiceImpl --> MovieRepository
+MovieQueryServiceImpl --> MovieSyncService
+MovieQueryServiceImpl --> MovieCatalogSource
+MovieQueryServiceImpl ..> MovieSpecificationBuilder : uses
+MovieSyncServiceImpl --> MovieCatalogSource
+MovieSyncServiceImpl --> MovieRepository
+MovieSyncServiceImpl --> GenreRepository
+MovieCatalogSource <|.. TmdbMovieCatalogAdapter
+TmdbMovieCatalogAdapter --> TmdbClient
+DiaryServiceImpl --> WatchedMovieRepository
+DiaryServiceImpl --> MovieRepository
+DiaryServiceImpl --> UserRepository
+DiaryServiceImpl --> WatchlistService
+DiaryServiceImpl --> ApplicationEventPublisher
+DiaryServiceImpl ..> DiaryEntryLoggedEvent : creates
+CollectionServiceImpl --> MovieCollectionRepository
+CollectionServiceImpl --> MovieRepository
+ReminderServiceImpl --> ReminderRepository
+ReminderServiceImpl --> MovieRepository
+ReminderServiceImpl --> UserRepository
+ReminderServiceImpl --> ReminderDispatchService
+ReminderJob --> ReminderDispatchService
+MovieSyncJob --> MovieSyncService
+ReminderDispatchServiceImpl --> ReminderRepository
+ReminderDispatchServiceImpl --> ApplicationEventPublisher
+ReminderDispatchServiceImpl ..> ReminderDueEvent : creates
+ReminderRepository ..> Reminder
+Reminder --> ReminderStatus : state
+ApplicationEventPublisher ..> NotificationEventListener : delivers events
+NotificationEventListener ..> ReminderDueEvent : handles
+NotificationEventListener ..> DiaryEntryLoggedEvent : handles
+NotificationEventListener --> NotificationSenderFactory
+NotificationSenderFactory o-- NotificationSender
+NotificationSender <|.. AbstractNotificationSender
+AbstractNotificationSender <|-- InAppNotificationSender
+AbstractNotificationSender <|-- EmailNotificationSender
+AbstractNotificationSender --> NotificationRepository
+
+note bottom of AbstractNotificationSender
+  send() is final:
+  load user → deliver() → save Notification
+end note
+note bottom of TmdbMovieCatalogAdapter : MovieCatalogSource ← TmdbClient
+note right of NotificationEventListener : @EventListener
+@enduml

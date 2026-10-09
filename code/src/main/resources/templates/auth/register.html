@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Create account')}"></head>
+<body class="bare">
+<main class="auth" id="main" data-page="register">
+    <div class="auth-card">
+        <span class="kid" data-doodle="kid:wave"></span>
+        <div class="logo"><span class="logo-mark" data-doodle="logo"></span><span>POPPY NIGHT</span></div>
+        <p class="note">make yourself a movie notebook.</p>
+        <form id="reg-form" class="form" novalidate>
+            <label class="fld"><span>Name</span><input type="text" id="rg-name" maxlength="60" autocomplete="name" required autofocus></label>
+            <label class="fld"><span>Email</span><input type="email" id="rg-email" autocomplete="email" required></label>
+            <label class="fld"><span>Password</span><input type="password" id="rg-pass" placeholder="at least 6 characters" autocomplete="new-password" required></label>
+            <p class="err" id="rg-err" hidden></p>
+            <button class="btn solid" type="submit">Next: pick your genres →</button>
+        </form>
+                <form id="auto-login" th:action="@{/login}" method="post" hidden>
+            <input type="hidden" name="username"><input type="hidden" name="password">
+        </form>
+        <p class="auth-alt">already have one? <a class="link" th:href="@{/login}">Login</a></p>
+    </div>
+</main>
+<script type="module" th:src="@{/js/pages/auth.js}"></script>
+</body>
+</html>

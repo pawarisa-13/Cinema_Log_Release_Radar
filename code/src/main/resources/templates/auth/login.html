@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Log in')}"></head>
+<body class="bare">
+<main class="auth" id="main" data-page="login">
+    <div class="auth-card">
+        <span class="kid" data-doodle="kid:ticket"></span>
+        <div class="logo"><span class="logo-mark" data-doodle="logo"></span><span>POPPY NIGHT</span></div>
+        <p class="note">welcome back! your seat is saved.</p>
+        <form class="form" th:action="@{/login}" method="post">
+            <p class="flash err" th:if="${param.error}">That email and password don’t match. Try again.</p>
+            <p class="flash" th:if="${param.logout}">You’re logged out. See you at the movies!</p>
+            <label class="fld"><span>Email</span><input type="email" id="li-email" name="username" autocomplete="email" required autofocus></label>
+            <label class="fld"><span>Password</span><input type="password" id="li-pass" name="password" autocomplete="current-password" required></label>
+            <button class="btn solid" type="submit">Login</button>
+        </form>
+        <p class="auth-alt">new here? <a class="link" th:href="@{/register}">Create account</a></p>
+    </div>
+</main>
+<script type="module" th:src="@{/js/pages/auth.js}"></script>
+</body>
+</html>

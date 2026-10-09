@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Profile')}"></head>
+<body>
+<th:block th:replace="~{fragments/layout :: nav('profile')}"></th:block>
+<main id="main" data-page="profile">
+    <div class="wrap">
+        <section class="prof">
+            <div class="prof-av"><span id="prof-av"></span></div>
+            <div style="min-width:0">
+                <h1 class="h1" th:text="${me.displayName}">Pawarisa</h1>
+                <p class="mail" th:text="${me.maskedEmail}">paw…@kkumail.com</p>
+                <p class="bio" th:if="${me.bio != null}" th:text="${me.bio}">bio</p>
+                <p class="bio muted" th:if="${me.bio == null}">no bio yet.</p>
+                <p class="eyebrow" style="margin-bottom:6px">favorite genres</p>
+                <div class="tags" style="margin-bottom:16px">
+                    <span class="tag" th:each="g : ${me.favoriteGenres}" th:text="${g}">Horror</span>
+                    <span class="muted" th:if="${#lists.isEmpty(me.favoriteGenres)}">none picked yet</span>
+                </div>
+                <button class="btn" data-act="edit-profile">Edit Profile</button>
+            </div>
+            <div class="prof-side"><p>that’s me!</p><span data-doodle="kid:wave"></span></div>
+        </section>
+        <section class="stats" id="stats" aria-label="Your movie statistics"></section>
+        <div id="page"><p class="loading">opening your notebook…</p></div>
+    </div>
+</main>
+<th:block th:replace="~{fragments/layout :: footer('profile')}"></th:block>
+<script type="module" th:src="@{/js/pages/profile.js}"></script>
+</body>
+</html>

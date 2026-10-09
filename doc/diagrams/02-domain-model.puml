@@ -1,0 +1,120 @@
+@startuml
+!include _style.iuml
+hide circle
+hide methods
+skinparam nodesep 40
+skinparam ranksep 60
+title Cinema Log & Release Radar — Domain Model (conceptual)
+
+class User {
+  email
+  passwordHash
+}
+class UserProfile {
+  displayName
+  bio
+  avatarStyle : AvatarStyle
+  avatarColor : AvatarColor
+}
+class Genre {
+  name
+}
+class Movie {
+  tmdbId
+  title
+  originalTitle
+  overview
+  releaseDate
+  runtime
+  voteAverage
+  popularity
+  originalLanguage
+  director
+  castNames
+}
+class WatchedMovie {
+  watchedDate
+  rating [0..1] 1-5
+  review [0..1]
+  place : WatchPlace
+}
+class WatchlistItem {
+  addedAt
+}
+class LikedMovie {
+  likedAt
+}
+class MovieCollection {
+  name
+  description
+}
+class CollectionMovie {
+  addedAt
+}
+class Reminder {
+  offsetDays 0|1|3|7
+  reminderDate
+  channel : NotificationChannel
+  status : ReminderStatus
+  sentAt [0..1]
+}
+class Notification {
+  type : NotificationType
+  channel : NotificationChannel
+  message
+  read
+}
+
+User "1" -- "1" UserProfile : has
+UserProfile "*" -- "*" Genre : favorite genres
+User "1" -- "*" WatchedMovie : logs
+User "1" -- "*" WatchlistItem : wants to watch
+User "1" -- "*" LikedMovie : likes
+User "1" -- "*" MovieCollection : owns
+MovieCollection "1" *-- "*" CollectionMovie : contains
+User "1" -- "*" Reminder : sets
+User "1" -- "*" Notification : receives
+WatchedMovie "*" -- "1" Movie : of
+WatchlistItem "*" -- "1" Movie : of
+LikedMovie "*" -- "1" Movie : of
+CollectionMovie "*" -- "1" Movie : of
+Reminder "*" -- "1" Movie : about
+Notification "*" -- "0..1" Movie : about
+Movie "*" -- "*" Genre : tagged with
+
+together {
+  enum WatchPlace <<enumeration>> {
+    CINEMA
+    HOME
+    OTHER
+  }
+  enum ReminderStatus <<enumeration>> {
+    SCHEDULED
+    SENT
+    CANCELLED
+  }
+  enum NotificationChannel <<enumeration>> {
+    IN_APP
+    EMAIL
+  }
+  enum NotificationType <<enumeration>> {
+    RELEASE_REMINDER
+    NOW_IN_THEATERS
+    REVIEW_ADDED
+  }
+  enum AvatarStyle <<enumeration>> {
+    BUN
+    BOB
+    CAP
+    CURLY
+  }
+  enum AvatarColor <<enumeration>> {
+    PINK
+    BLUE
+    GREEN
+    YELLOW
+    LAVENDER
+  }
+}
+Movie -[hidden]down- WatchPlace
+@enduml

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LikeServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cinema-log</a> &gt; <a href="index.source.html" class="el_package">com.cinemalog.service.impl</a> &gt; <span class="el_source">LikeServiceImpl.java</span></div><h1>LikeServiceImpl.java</h1><pre class="source lang-java linenums">package com.cinemalog.service.impl;
+
+import java.util.List;
+
+import com.cinemalog.domain.entity.LikedMovie;
+import com.cinemalog.domain.entity.Movie;
+import com.cinemalog.dto.response.MovieSummaryResponse;
+import com.cinemalog.exception.ResourceNotFoundException;
+import com.cinemalog.mapper.MovieMapper;
+import com.cinemalog.repository.LikedMovieRepository;
+import com.cinemalog.repository.MovieRepository;
+import com.cinemalog.repository.UserRepository;
+import com.cinemalog.service.LikeService;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional(readOnly = true)
+public class LikeServiceImpl implements LikeService {
+
+    private final LikedMovieRepository likedMovieRepository;
+    private final MovieRepository movieRepository;
+    private final UserRepository userRepository;
+    private final MovieMapper movieMapper;
+
+<span class="nc" id="L27">    public LikeServiceImpl(LikedMovieRepository likedMovieRepository, MovieRepository movieRepository,</span>
+                           UserRepository userRepository, MovieMapper movieMapper) {
+<span class="nc" id="L29">        this.likedMovieRepository = likedMovieRepository;</span>
+<span class="nc" id="L30">        this.movieRepository = movieRepository;</span>
+<span class="nc" id="L31">        this.userRepository = userRepository;</span>
+<span class="nc" id="L32">        this.movieMapper = movieMapper;</span>
+<span class="nc" id="L33">    }</span>
+
+    @Override
+    public List&lt;MovieSummaryResponse&gt; list(Long userId) {
+<span class="nc" id="L37">        return likedMovieRepository.findByUserIdOrderByLikedAtDesc(userId).stream()</span>
+<span class="nc" id="L38">                .map(LikedMovie::getMovie).map(movieMapper::toSummary).toList();</span>
+    }
+
+    @Override
+    @Transactional
+    public void like(Long userId, Long movieId) {
+<span class="nc bnc" id="L44" title="All 2 branches missed.">        if (likedMovieRepository.existsByUserIdAndMovieId(userId, movieId)) {</span>
+<span class="nc" id="L45">            return;</span>
+        }
+<span class="nc" id="L47">        Movie movie = movieRepository.findById(movieId)</span>
+<span class="nc" id="L48">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Movie &quot; + movieId + &quot; was not found.&quot;));</span>
+<span class="nc" id="L49">        likedMovieRepository.save(new LikedMovie(userRepository.getReferenceById(userId), movie));</span>
+<span class="nc" id="L50">    }</span>
+
+    @Override
+    @Transactional
+    public void unlike(Long userId, Long movieId) {
+<span class="nc" id="L55">        likedMovieRepository.findByUserIdAndMovieId(userId, movieId).ifPresent(likedMovieRepository::delete);</span>
+<span class="nc" id="L56">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

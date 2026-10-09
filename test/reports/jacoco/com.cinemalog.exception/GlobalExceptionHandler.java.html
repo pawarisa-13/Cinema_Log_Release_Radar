@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalExceptionHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cinema-log</a> &gt; <a href="index.source.html" class="el_package">com.cinemalog.exception</a> &gt; <span class="el_source">GlobalExceptionHandler.java</span></div><h1>GlobalExceptionHandler.java</h1><pre class="source lang-java linenums">package com.cinemalog.exception;
+
+import java.time.Instant;
+import java.util.List;
+
+import com.cinemalog.dto.response.ErrorResponse;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
+@RestControllerAdvice(basePackages = &quot;com.cinemalog.controller.api&quot;)
+<span class="fc" id="L24">public class GlobalExceptionHandler {</span>
+
+<span class="fc" id="L26">    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);</span>
+
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleApi(ApiException ex, HttpServletRequest req) {
+<span class="fc" id="L30">        return build(ex.getStatus(), ex.getMessage(), req, List.of());</span>
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleBodyValidation(MethodArgumentNotValidException ex, HttpServletRequest req) {
+<span class="fc" id="L35">        List&lt;ErrorResponse.FieldErrorItem&gt; fields = ex.getBindingResult().getFieldErrors().stream()</span>
+<span class="fc" id="L36">                .map(f -&gt; new ErrorResponse.FieldErrorItem(f.getField(), f.getDefaultMessage()))</span>
+<span class="fc" id="L37">                .toList();</span>
+<span class="fc" id="L38">        return build(HttpStatus.BAD_REQUEST, &quot;Some fields are not valid.&quot;, req, fields);</span>
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleParamValidation(HandlerMethodValidationException ex, HttpServletRequest req) {
+<span class="nc" id="L43">        List&lt;ErrorResponse.FieldErrorItem&gt; fields = ex.getParameterValidationResults().stream()</span>
+<span class="nc" id="L44">                .flatMap(r -&gt; r.getResolvableErrors().stream()</span>
+<span class="nc" id="L45">                        .map(e -&gt; new ErrorResponse.FieldErrorItem(r.getMethodParameter().getParameterName(), e.getDefaultMessage())))</span>
+<span class="nc" id="L46">                .toList();</span>
+<span class="nc" id="L47">        return build(HttpStatus.BAD_REQUEST, &quot;Some parameters are not valid.&quot;, req, fields);</span>
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleConstraint(ConstraintViolationException ex, HttpServletRequest req) {
+<span class="nc" id="L52">        List&lt;ErrorResponse.FieldErrorItem&gt; fields = ex.getConstraintViolations().stream()</span>
+<span class="nc" id="L53">                .map(v -&gt; new ErrorResponse.FieldErrorItem(v.getPropertyPath().toString(), v.getMessage()))</span>
+<span class="nc" id="L54">                .toList();</span>
+<span class="nc" id="L55">        return build(HttpStatus.BAD_REQUEST, &quot;Some parameters are not valid.&quot;, req, fields);</span>
+    }
+
+    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
+    public ResponseEntity&lt;ErrorResponse&gt; handleUnreadable(Exception ex, HttpServletRequest req) {
+<span class="nc" id="L60">        return build(HttpStatus.BAD_REQUEST, &quot;The request is malformed. Check the JSON body and parameter types.&quot;, req, List.of());</span>
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleIntegrity(DataIntegrityViolationException ex, HttpServletRequest req) {
+<span class="nc" id="L65">        return build(HttpStatus.CONFLICT, &quot;This change conflicts with existing data.&quot;, req, List.of());</span>
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity&lt;ErrorResponse&gt; handleUnexpected(Exception ex, HttpServletRequest req) {
+<span class="nc" id="L70">        log.error(&quot;Unexpected error on {} {}&quot;, req.getMethod(), req.getRequestURI(), ex);</span>
+<span class="nc" id="L71">        return build(HttpStatus.INTERNAL_SERVER_ERROR, &quot;Something went wrong on our side. Please try again.&quot;, req, List.of());</span>
+    }
+
+    private ResponseEntity&lt;ErrorResponse&gt; build(HttpStatus status, String message, HttpServletRequest req,
+                                                List&lt;ErrorResponse.FieldErrorItem&gt; fields) {
+<span class="fc" id="L76">        ErrorResponse body = new ErrorResponse(Instant.now(), status.value(), status.getReasonPhrase(),</span>
+<span class="fc" id="L77">                message, req.getRequestURI(), fields);</span>
+<span class="fc" id="L78">        return ResponseEntity.status(status).body(body);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

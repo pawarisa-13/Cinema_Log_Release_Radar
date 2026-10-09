@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OpenApiConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cinema-log</a> &gt; <a href="index.source.html" class="el_package">com.cinemalog.config</a> &gt; <span class="el_source">OpenApiConfig.java</span></div><h1>OpenApiConfig.java</h1><pre class="source lang-java linenums">package com.cinemalog.config;
+
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+<span class="nc" id="L13">public class OpenApiConfig {</span>
+
+    @Bean
+    public OpenAPI cinemaLogOpenApi() {
+<span class="nc" id="L17">        return new OpenAPI()</span>
+<span class="nc" id="L18">                .info(new Info()</span>
+<span class="nc" id="L19">                        .title(&quot;Cinema Log &amp; Release Radar API&quot;)</span>
+<span class="nc" id="L20">                        .version(&quot;v1&quot;)</span>
+<span class="nc" id="L21">                        .description(&quot;REST API for the movie diary. Log in at /login first (register an account, or use a demo account from the team); &quot;</span>
+                                + &quot;Swagger then reuses the browser session cookie.&quot;))
+<span class="nc" id="L23">                .components(new Components().addSecuritySchemes(&quot;session&quot;,</span>
+<span class="nc" id="L24">                        new SecurityScheme().type(SecurityScheme.Type.APIKEY).in(SecurityScheme.In.COOKIE).name(&quot;JSESSIONID&quot;)))</span>
+<span class="nc" id="L25">                .addSecurityItem(new SecurityRequirement().addList(&quot;session&quot;));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

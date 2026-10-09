@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Your taste')}"></head>
+<body class="bare">
+<main class="auth" id="main" data-page="onboarding">
+    <div class="auth-card" style="width:min(760px,100%)">
+        <p class="eyebrow">step 2 of 2</p>
+        <h1 class="h1" style="margin-top:8px">What kind of movies do you like?</h1>
+        <p class="note" style="margin-top:8px">pick as many as you want. we’ll fill “picked for you” with these.</p>
+        <form id="genre-form">
+            <div class="genres-pick" id="genre-grid"></div>
+            <p class="err" id="gp-err" hidden style="margin-top:14px"></p>
+            <button class="btn solid" type="submit" style="margin-top:26px;width:auto;padding:12px 26px">Build my movie personality →</button>
+        </form>
+    </div>
+</main>
+<script type="module" th:src="@{/js/pages/auth.js}"></script>
+</body>
+</html>

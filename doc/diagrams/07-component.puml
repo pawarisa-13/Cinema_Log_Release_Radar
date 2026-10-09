@@ -1,0 +1,68 @@
+@startuml
+!include _style.iuml
+title Component Diagram — Cinema Log & Release Radar
+skinparam componentStyle uml2
+left to right direction
+
+node "Web browser" as browser {
+  [Thymeleaf HTML pages] as pages
+  [ES modules\nstatic/js (core / components / pages)] as js
+}
+
+component "cinema-log.jar (Spring Boot)" as app {
+  component "Spring Security\nfilter chain\n(SecurityConfig)" as sec
+  component "Page controllers\ncontroller.web" as web
+  component "REST controllers\ncontroller.api (/api/v1)" as api
+  component "GlobalExceptionHandler\n@RestControllerAdvice" as geh
+  component "Service layer\nservice + service.impl" as svc
+  component "Scheduled jobs\nMovieSyncJob, ReminderJob" as job
+  component "Notification module\nservice.notification" as noti
+  component "TMDB adapter\nTmdbMovieCatalogAdapter + TmdbClient" as tmdb
+  component "Repositories\nSpring Data JPA" as repo
+  component "springdoc OpenAPI\n/swagger-ui.html" as doc
+  component "Spring Boot Actuator\n/actuator/health" as act
+
+  interface "MovieCatalogSource" as IMCS
+  interface "NotificationSender" as INS
+  interface "Service interfaces\n(MovieQueryService, DiaryCommandService, …)" as ISVC
+  interface "ApplicationEventPublisher\n(events)" as IEV
+}
+
+database "PostgreSQL" as db
+cloud "TMDB API\napi.themoviedb.org" as tmdbapi
+cloud "SMTP server\n(optional)" as smtp
+
+interface "HTTP pages" as IHTTP
+interface "REST JSON /api/v1" as IREST
+
+pages -- IHTTP
+js -- IREST
+IHTTP )-- sec
+IREST )-- sec
+sec --> web
+sec --> api
+sec --> doc : /swagger-ui.html, /v3/api-docs
+sec --> act : /actuator/health
+api ..> geh : exceptions →\nErrorResponse
+
+web --( ISVC
+api --( ISVC
+job --( ISVC
+ISVC -- svc
+
+svc --( IMCS
+IMCS -- tmdb
+tmdb --> tmdbapi : HTTPS\n(v4 token as Bearer header,\nor v3 key as api_key param)
+
+svc --( IEV
+IEV -- noti
+noti --( INS
+note right of INS
+  Strategy: InApp / Email senders implement it,
+  picked by NotificationSenderFactory.forChannel()
+end note
+noti --> smtp : SimpleMailMessage
+svc --> repo
+noti --> repo
+repo --> db : JDBC (Hibernate)
+@enduml

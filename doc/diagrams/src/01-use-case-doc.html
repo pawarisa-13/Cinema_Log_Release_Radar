@@ -1,0 +1,249 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><title>Use Case Diagram และคำอธิบาย Use Case</title>
+<style>
+@page { size: A4; margin: 16mm 15mm 16mm 15mm; }
+body { font-family: "Sarabun", "TH Sarabun New", "Tahoma", sans-serif; font-size: 10.5pt; line-height: 1.35; color: #000; }
+h1 { font-size: 16pt; margin: 0 0 2mm; } h2 { font-size: 12.5pt; margin: 6mm 0 2mm; border-bottom: 1px solid #000; padding-bottom: 1mm; }
+p.sub { margin: 0 0 4mm; font-size: 9.5pt; }
+.fig { text-align: center; } .fig img { max-width: 100%; max-height: 222mm; }
+.cap { text-align: center; font-size: 9pt; margin-top: 2mm; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #000; padding: 1.4mm 2mm; vertical-align: top; text-align: left; }
+table.uc { margin: 0 0 5mm; page-break-inside: avoid; }
+table.uc th { width: 40mm; font-weight: bold; background: #fff; }
+table.rel th { background: #fff; }
+ul, ol { margin: 0; padding-left: 5mm; } li { margin: 0.3mm 0; }
+td.code { overflow-wrap: anywhere; }
+code { font-family: "Courier New", monospace; font-size: 8.8pt; }
+.pb { page-break-before: always; }
+.nw { white-space: nowrap; }
+</style></head><body>
+<h1>Cinema Log &amp; Release Radar — Use Case Model</h1>
+<p class="sub">CP353002 · Section 03 · ไฟล์ต้นฉบับ: <code>doc/diagrams/01-use-case.puml</code></p>
+<h2>1. แผนภาพ Use Case (Use Case Diagram)</h2>
+<div class="fig"><img src="../01-use-case.svg" alt="Use case diagram"></div>
+<div class="cap">รูปที่ 1 — Use case diagram</div>
+<h2 class="pb">2. Actor</h2>
+<table class="rel"><tr><th style="width:42mm">Actor</th><th>คำอธิบาย</th></tr>
+<tr><td><b>Visitor</b></td><td>ผู้ที่ยังไม่ได้ล็อกอิน เข้าได้เฉพาะ <code>/login</code>, <code>/register</code> และ public API (<code>SecurityConfig</code>)</td></tr><tr><td><b>Member</b></td><td>Visitor ที่ล็อกอินแล้ว (generalization) ทุกหน้าและ <code>/api/v1/users/me/**</code> ต้องมี session</td></tr><tr><td><b>Scheduler</b></td><td>งาน Spring <code>@Scheduled</code> คือ <code>MovieSyncJob</code> และ <code>ReminderJob</code> แต่ละงานจะรันหนึ่งครั้งตอน <code>ApplicationReadyEvent</code> ด้วย</td></tr><tr><td><b>TMDB API, SMTP server</b></td><td>ระบบภายนอก การส่งอีเมลเป็นตัวเลือกเสริม (<code>spring.mail.host</code> ปล่อยว่างได้)</td></tr></table>
+<h2>3. ความสัมพันธ์ «include» / «extend»</h2>
+<table class="rel"><tr><th style="width:38mm">ความสัมพันธ์ (Relation)</th><th style="width:62mm">เหตุผล</th><th>โค้ดที่เกี่ยวข้อง</th></tr>
+<tr><td>UC01 «include» UC02</td><td>หลังสมัครสมาชิกสำเร็จ หน้าเว็บจะส่งฟอร์มล็อกอินที่ซ่อนไว้ทุกครั้ง</td><td class="code"><code>templates/auth/register.html</code> (<code>#auto-login</code>), <code>pages/auth.js</code></td></tr><tr><td>UC04 «extend» UC02</td><td>เฉพาะเมื่อโปรไฟล์ยังไม่มีแนวหนังที่ชอบ</td><td class="code"><code>OnboardingAwareSuccessHandler</code> → <code>UserProfileService.needsOnboarding()</code></td></tr><tr><td>UC07 «extend» UC06</td><td>เฉพาะการค้นหาด้วยข้อความยาว 2 ตัวอักษรขึ้นไป ที่หน้า 0 และมี TMDB key</td><td class="code"><code>MovieQueryServiceImpl.search()</code> → <code>MovieSyncService.importSearchResults()</code></td></tr><tr><td>UC08 «include» UC10</td><td>หน้าหนังจะโหลดรีวิวของหนังเรื่องนั้นทุกครั้ง</td><td class="code"><code>pages/movie.js</code> → <code>GET /api/v1/movies/{id}/reviews</code></td></tr><tr><td>UC09 «extend» UC08</td><td>เฉพาะเมื่อรายละเอียดยังไม่มีหรือเก่าเกินไป และตั้งค่า key แล้ว</td><td class="code"><code>MovieQueryServiceImpl.getDetail()</code> → <code>Movie.needsDetails()</code> → <code>refreshDetails()</code></td></tr><tr><td>UC23 «include» UC24</td><td>การเตือนทุกรายการที่ถึงกำหนดจะถูกส่ง</td><td class="code"><code>ReminderDispatchServiceImpl.dispatchDueReminders()</code></td></tr><tr><td>UC24 «extend» UC18</td><td>เฉพาะเมื่อถึงวันเตือนแล้ว</td><td class="code"><code>ReminderServiceImpl.save()</code> → <code>dispatchIfDue()</code></td></tr></table>
+<h2>4. คำอธิบาย Use Case</h2>
+<table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC01</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Register account (สมัครสมาชิก)</td></tr>
+<tr><th>Actor หลัก</th><td>Visitor</td></tr>
+<tr><th>คำอธิบาย</th><td>ผู้เยี่ยมชมสร้างบัญชีใหม่ และระบบล็อกอินให้ทันที</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>ยังไม่ได้ล็อกอิน</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td><ul><li>มีแถวใน <code>users</code> + <code>user_profiles</code> และเก็บรหัสผ่านเป็น BCrypt hash</li></ul></td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li>ผู้เยี่ยมชมกรอกชื่อที่แสดง อีเมล และรหัสผ่าน</li><li>หน้าเว็บส่ง <code>POST /api/v1/auth/register</code></li><li>ระบบสร้างบัญชีและโปรไฟล์</li><li>หน้าเว็บล็อกอินให้ผู้เยี่ยมชมโดยอัตโนมัติ (UC02)</li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td><ul><li>อีเมลนี้ถูกใช้แล้ว → 409</li><li>ไม่กรอกชื่อ อีเมลไม่ถูกต้อง หรือรหัสผ่านไม่ได้ยาว 6–72 ตัวอักษร → 400 พร้อม <code>fieldErrors</code></li></ul></td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC02</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Log in (เข้าสู่ระบบ)</td></tr>
+<tr><th>Actor หลัก</th><td>Visitor</td></tr>
+<tr><th>คำอธิบาย</th><td>ผู้เยี่ยมชมเข้าสู่ระบบด้วยอีเมลและรหัสผ่าน แล้วได้ session</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>มีบัญชีอยู่แล้ว</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td><ul><li>ตั้งค่า session cookie แล้ว</li></ul></td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li>ผู้เยี่ยมชมส่งอีเมล + รหัสผ่านไปที่ <code>/login</code></li><li>ระบบสร้าง session</li><li>ระบบพาไปที่ <code>/films</code></li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td><ul><li>อีเมลหรือรหัสผ่านผิด → <code>/login?error</code></li><li>ยังไม่มีแนวหนังที่ชอบ → <code>/onboarding</code> (UC04)</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC03</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Log out (ออกจากระบบ)</td></tr>
+<tr><th>Actor หลัก</th><td>Member</td></tr>
+<tr><th>คำอธิบาย</th><td>สมาชิกจบ session ปัจจุบัน</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>ล็อกอินอยู่</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td><ul><li>session สิ้นสุด และพาไปที่ <code>/login?logout</code></li></ul></td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li>สมาชิกเปิดเมนูนำทางแล้วเลือกออกจากระบบ (<code>POST /logout</code>)</li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td>—</td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC04</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Pick favorite genres (เลือกแนวหนังที่ชอบ)</td></tr>
+<tr><th>Actor หลัก</th><td>Member</td></tr>
+<tr><th>คำอธิบาย</th><td>สมาชิกเลือกแนวหนังที่ระบบจะใช้แนะนำหนัง</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>ล็อกอินอยู่</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td><ul><li>ข้อมูลใน <code>user_favorite_genres</code> ถูกแทนที่ด้วยชุดใหม่</li></ul></td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li>สมาชิกติ๊กเลือกแนวหนัง</li><li>หน้าเว็บส่ง <code>PUT /api/v1/users/me/favorite-genres</code></li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td><ul><li>ไม่ได้ติ๊กเลย → 400 &quot;Pick at least one genre&quot;</li><li>เลือกเกิน 10 แนว → 400</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC05</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Browse discovery shelves (ดูชั้นหนังหน้าแรก)</td></tr>
+<tr><th>Actor หลัก</th><td>Member</td></tr>
+<tr><th>คำอธิบาย</th><td>สมาชิกดูชั้นหนังต่าง ๆ ในหน้าแรก</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>ล็อกอินอยู่</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td>—</td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li>สมาชิกเปิด <code>/films</code></li><li>ระบบแสดงหนังที่กำลังฉาย หนังที่จะเข้าฉาย หนังคะแนนสูงสุด และหนังแนะนำ (<code>/api/v1/movies/now-showing</code>, <code>/upcoming</code>, <code>/top-rated</code>, <code>/recommended</code>)</li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td><ul><li>ยังไม่มีแนวหนังที่ชอบ → หนังแนะนำจะใช้รายการหนังคะแนนสูงสุดแทน</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC06</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Search &amp; filter catalog (ค้นหาและกรองหนัง)</td></tr>
+<tr><th>Actor หลัก</th><td>Member</td></tr>
+<tr><th>คำอธิบาย</th><td>สมาชิกค้นหาหนังในคลังด้วยข้อความและตัวกรอง</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>ล็อกอินอยู่</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td>—</td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li>สมาชิกกำหนดข้อความ แนวหนัง ปี ทศวรรษ ฉายก่อนวันที่ คะแนนขั้นต่ำ ภาษา และการเรียงลำดับ</li><li>หน้าเว็บส่ง <code>GET /api/v1/movies</code></li><li>ระบบส่งผลลัพธ์กลับมาหน้าละ 40 รายการ</li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td><ul><li>ไม่พบหนังที่ตรงเงื่อนไข → แสดงหน้าว่าง</li><li>TMDB มีข้อผิดพลาด → แสดงเฉพาะผลจากฐานข้อมูลในระบบ (บันทึก warning ไว้ใน log)</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC07</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Import search results from TMDB (นำเข้าผลการค้นหาจาก TMDB)</td></tr>
+<tr><th>Actor หลัก</th><td>System (ขยายจาก UC06)</td></tr>
+<tr><th>คำอธิบาย</th><td>ระหว่างการค้นหา ระบบนำเข้าหนังที่ตรงกับคำค้นจาก TMDB</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>ค้นหาด้วยข้อความยาว 2 ตัวอักษรขึ้นไป (<code>MovieSearchCriteria.hasText()</code>) อยู่ที่หน้า 0 และตั้งค่า TMDB key แล้ว</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td><ul><li>มีแถวใน <code>movies</code> ที่เพิ่มใหม่หรือถูกอัปเดต</li></ul></td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li>ระบบเรียก <code>TmdbMovieCatalogAdapter.search()</code></li><li>ระบบ upsert หนังที่พบโดยใช้ <code>tmdb_id</code></li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td><ul><li>ติดต่อ TMDB ไม่ได้ → ดักจับ <code>ExternalServiceException</code> ไว้ แล้วค้นหาต่อตามปกติ</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC08</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>View movie details (ดูรายละเอียดหนัง)</td></tr>
+<tr><th>Actor หลัก</th><td>Member</td></tr>
+<tr><th>คำอธิบาย</th><td>สมาชิกเปิดหน้าหนังที่มีรายละเอียดและปุ่มต่าง ๆ</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>ล็อกอินอยู่</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td>—</td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li>สมาชิกเปิด <code>/movies/{id}</code></li><li>ระบบแสดงรายละเอียด นักแสดง รีวิว (UC10) และหนังที่คล้ายกัน</li><li>หน้าเว็บแสดงปุ่มกดถูกใจ watchlist ดูแล้ว ให้คะแนน รีวิว ตั้งเตือน และ collection</li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td><ul><li>ไม่พบ id นี้ → 404</li><li>หนังยังไม่เข้าฉาย → ปุ่มดูแล้ว/ให้คะแนน/รีวิวใช้ไม่ได้ แต่ปุ่มตั้งเตือนใช้ได้</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC09</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Refresh movie details from TMDB (อัปเดตรายละเอียดหนังจาก TMDB)</td></tr>
+<tr><th>Actor หลัก</th><td>System (ขยายจาก UC08)</td></tr>
+<tr><th>คำอธิบาย</th><td>เมื่อรายละเอียดหนังยังไม่มีหรือเก่าเกินไป ระบบจะดึงข้อมูลใหม่จาก TMDB</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>รายละเอียดยังไม่มีหรือเก่าเกินไป และตั้งค่า TMDB key แล้ว</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td><ul><li><code>details_fetched_at</code> ถูกอัปเดต</li></ul></td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li>ระบบเรียก <code>MovieSyncService.refreshDetails()</code></li><li>ระบบอัปเดตความยาวหนัง ผู้กำกับ นักแสดง และแนวหนัง</li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td><ul><li>TMDB มีข้อผิดพลาด → แสดงข้อมูลเดิม</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC10</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Read movie reviews (อ่านรีวิวหนัง)</td></tr>
+<tr><th>Actor หลัก</th><td>Member</td></tr>
+<tr><th>คำอธิบาย</th><td>สมาชิกอ่านรีวิวของหนังเรื่องหนึ่ง</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>มีหนังเรื่องนี้อยู่ในระบบ</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td>—</td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li>หน้าเว็บส่ง <code>GET /api/v1/movies/{id}/reviews</code></li><li>ระบบส่งคะแนนเฉลี่ยและรีวิวกลับมา โดยรีวิวของตัวเองอยู่บนสุด</li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td><ul><li>ไม่พบหนังเรื่องนี้ → 404</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC11</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Like / unlike movie (กดถูกใจ / ยกเลิกถูกใจหนัง)</td></tr>
+<tr><th>Actor หลัก</th><td>Member</td></tr>
+<tr><th>คำอธิบาย</th><td>สมาชิกกดถูกใจหรือยกเลิกถูกใจหนัง</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>ล็อกอินอยู่</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td><ul><li>เพิ่มหรือลบแถวใน <code>liked_movies</code></li></ul></td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li>สมาชิกกด ♡ → <code>PUT /api/v1/users/me/likes/{movieId}</code> ถ้ากดซ้ำ → <code>DELETE</code></li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td><ul><li>ถูกใจไว้แล้ว → ไม่มีอะไรเปลี่ยน</li><li>ไม่พบหนังเรื่องนี้ → 404</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC12</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Add / remove watchlist (เพิ่ม / ลบ watchlist)</td></tr>
+<tr><th>Actor หลัก</th><td>Member</td></tr>
+<tr><th>คำอธิบาย</th><td>สมาชิกเพิ่มหนังเข้า watchlist หรือลบออกจาก watchlist</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>ล็อกอินอยู่</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td><ul><li>เพิ่มหรือลบแถวใน <code>watchlist_items</code></li></ul></td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li>สมาชิกกด + → <code>PUT /api/v1/users/me/watchlist/{movieId}</code> ถ้าลบ → <code>DELETE</code></li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td><ul><li>อยู่ในรายการแล้ว → ไม่มีอะไรเปลี่ยน</li><li>ไม่พบหนังเรื่องนี้ → 404</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC13</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Log watched movie (บันทึกหนังที่ดูแล้ว)</td></tr>
+<tr><th>Actor หลัก</th><td>Member</td></tr>
+<tr><th>คำอธิบาย</th><td>สมาชิกบันทึกว่าดูหนังเรื่องหนึ่งแล้ว จะให้คะแนนและเขียนรีวิวด้วยก็ได้</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>ล็อกอินอยู่ และหนังเข้าฉายแล้ว</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td><ul><li>เพิ่มแถวใน <code>watched_movies</code> และเอาหนังออกจาก watchlist ถ้ามีการเขียนรีวิว จะมีการแจ้งเตือนในแอปว่า &quot;review added&quot;</li></ul></td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li>สมาชิกเลือกวันที่ จำนวนดาว รีวิว และสถานที่ดู</li><li>หน้าเว็บส่ง <code>POST /api/v1/users/me/diary</code></li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td><ul><li>วันที่อยู่ในอนาคต หรือหนังยังไม่เข้าฉาย → 400</li><li>คะแนนไม่อยู่ในช่วง 1–5 → 400</li><li>ไม่พบหนังเรื่องนี้ → 404</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC14</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Edit / delete diary entry (แก้ไข / ลบบันทึกไดอารี)</td></tr>
+<tr><th>Actor หลัก</th><td>Member</td></tr>
+<tr><th>คำอธิบาย</th><td>สมาชิกแก้ไขหรือลบบันทึกในไดอารีของตัวเอง</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>บันทึกนั้นเป็นของสมาชิกคนนี้</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td><ul><li>บันทึกถูกแก้ไข (ถ้าเพิ่มรีวิวครั้งแรก → มีการแจ้งเตือน) หรือถูกลบ</li></ul></td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li>สมาชิกเลือกแก้ไข → <code>PUT /api/v1/users/me/diary/{id}</code> หรือเลือกลบ → <code>DELETE /api/v1/users/me/diary/{id}</code></li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td><ul><li>ใช้กฎเรื่องวันที่เหมือน UC13</li><li>เป็นบันทึกของผู้ใช้คนอื่น → 404</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC15</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Browse diary calendar (ดูปฏิทินไดอารี)</td></tr>
+<tr><th>Actor หลัก</th><td>Member</td></tr>
+<tr><th>คำอธิบาย</th><td>สมาชิกดูไดอารีของตัวเองในรูปแบบปฏิทินรายเดือน</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>ล็อกอินอยู่</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td>—</td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li>สมาชิกเปิดตารางรายเดือนที่ <code>/diary</code> (<code>/diary/calendar?month=</code>)</li><li>สมาชิกคลิกเลือกวัน (<code>/diary/day?date=</code>)</li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td><ul><li>เดือนนั้นไม่มีบันทึก → แสดงหน้าว่าง</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC16</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Browse library lists (ดูรายการในคลังของฉัน)</td></tr>
+<tr><th>Actor หลัก</th><td>Member</td></tr>
+<tr><th>คำอธิบาย</th><td>สมาชิกดูรายการหนังที่ดูแล้ว watchlist และหนังที่ถูกใจ</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>ล็อกอินอยู่</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td>—</td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li>สมาชิกเปิดหน้า <code>/watched</code>, <code>/watchlist</code> หรือ <code>/liked</code></li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td><ul><li>รายการว่าง → แสดงหน้าว่าง</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC17</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Manage collections (จัดการ collection)</td></tr>
+<tr><th>Actor หลัก</th><td>Member</td></tr>
+<tr><th>คำอธิบาย</th><td>สมาชิกสร้าง เปลี่ยนชื่อ และลบ collection รวมถึงเพิ่มหรือลบหนังใน collection</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>ล็อกอินอยู่</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td><ul><li><code>collections</code> / <code>collection_movies</code> มีการเปลี่ยนแปลง</li></ul></td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li>สร้าง เปลี่ยนชื่อ และลบผ่าน <code>/api/v1/users/me/collections</code></li><li>เพิ่ม/ลบหนังผ่าน <code>PUT</code>/<code>DELETE /{id}/movies/{movieId}</code></li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td><ul><li>ชื่อซ้ำ (ไม่สนตัวพิมพ์เล็ก-ใหญ่) → 409</li><li>ไม่กรอกชื่อ → 400</li><li>ลบหนังที่ไม่ได้อยู่ใน collection → 404</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC18</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Set / change release reminder (ตั้ง / เปลี่ยนการเตือนวันเข้าฉาย)</td></tr>
+<tr><th>Actor หลัก</th><td>Member</td></tr>
+<tr><th>คำอธิบาย</th><td>สมาชิกขอให้ระบบเตือนก่อนหนังที่กำลังจะเข้าฉาย</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>หนังยังไม่เข้าฉาย</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td><ul><li>แถวใน <code>reminders</code> มีสถานะ SCHEDULED (หรือ SENT)</li></ul></td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li>สมาชิกเลือกเตือนล่วงหน้า 7 / 3 / 1 / 0 วัน และเลือกช่องทาง IN_APP หรือ EMAIL</li><li>หน้าเว็บส่ง <code>PUT /api/v1/users/me/reminders/{movieId}</code></li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td><ul><li>เลือกจำนวนวันอื่น → 400</li><li>ไม่พบหนังเรื่องนี้ → 404</li><li>หนังเข้าฉายแล้วหรือไม่มีวันเข้าฉาย → 400</li><li>มีการเตือนอยู่แล้ว → ตั้งเวลาใหม่</li><li>ถึงวันเตือนแล้ว → ส่งทันที (UC24)</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC19</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Cancel release reminder (ยกเลิกการเตือนวันเข้าฉาย)</td></tr>
+<tr><th>Actor หลัก</th><td>Member</td></tr>
+<tr><th>คำอธิบาย</th><td>สมาชิกลบการเตือน</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>มีการเตือนอยู่</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td><ul><li>สถานะเป็น CANCELLED</li></ul></td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li>หน้าเว็บส่ง <code>DELETE /api/v1/users/me/reminders/{movieId}</code></li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td><ul><li>ไม่มีการเตือน → 404</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC20</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Read notifications (อ่านการแจ้งเตือน)</td></tr>
+<tr><th>Actor หลัก</th><td>Member</td></tr>
+<tr><th>คำอธิบาย</th><td>สมาชิกอ่านการแจ้งเตือนจากเมนูรูปกระดิ่ง</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>ล็อกอินอยู่</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td><ul><li>การแจ้งเตือนทั้งหมดเป็น <code>is_read = true</code></li></ul></td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li>กระดิ่งแสดงจำนวนที่ยังไม่อ่าน + 10 รายการล่าสุด</li><li>เมื่อเปิดกระดิ่งตอนที่มีรายการยังไม่อ่าน → <code>POST /notifications/read-all</code></li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td>—</td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC21</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Edit profile &amp; view stats (แก้ไขโปรไฟล์และดูสถิติ)</td></tr>
+<tr><th>Actor หลัก</th><td>Member</td></tr>
+<tr><th>คำอธิบาย</th><td>สมาชิกแก้ไขโปรไฟล์และดูสถิติของตัวเอง</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>ล็อกอินอยู่</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td><ul><li><code>users.email</code> / <code>user_profiles</code> ถูกอัปเดต</li></ul></td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li>สมาชิกแก้ไขชื่อ อีเมล bio รูปโปรไฟล์ และแนวหนังที่ชอบ → <code>PUT /api/v1/users/me</code></li><li>หน้าโปรไฟล์แสดงข้อมูลจาก <code>/api/v1/users/me/stats</code></li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td><ul><li>อีเมลถูกใช้โดยบัญชีอื่นแล้ว → 409</li><li>ข้อมูลไม่ถูกต้อง → 400</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC22</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Sync movie catalog (ซิงก์คลังหนัง)</td></tr>
+<tr><th>Actor หลัก</th><td>Scheduler</td></tr>
+<tr><th>คำอธิบาย</th><td>งานที่ตั้งเวลาไว้ทำให้คลังหนังในระบบตรงกับ TMDB อยู่เสมอ</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>ตั้งค่า TMDB key แล้ว</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td><ul><li>เพิ่ม <code>genres</code> ที่ยังไม่มี (ชื่อเดิมยังคงไว้) และ upsert <code>movies</code> กับ <code>movie_genres</code></li></ul></td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li><code>MovieSyncJob</code> เรียก <code>syncGenres()</code> + <code>syncCatalog()</code></li><li>ระบบดึงหนังที่กำลังฉาย ที่จะเข้าฉาย ยอดนิยม และคะแนนสูงสุด × <code>sync-pages</code> หน้า</li><li>ระบบ upsert หนังโดยใช้ <code>tmdb_id</code></li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td><ul><li>ไม่มี key → ข้ามไปเงียบ ๆ</li><li>TMDB มีข้อผิดพลาด → WARN &quot;TMDB sync skipped&quot;</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC23</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Dispatch due reminders (ส่งการเตือนที่ถึงกำหนด)</td></tr>
+<tr><th>Actor หลัก</th><td>Scheduler</td></tr>
+<tr><th>คำอธิบาย</th><td>งานที่ตั้งเวลาไว้ส่งการเตือนทุกรายการที่ถึงวันเตือนแล้ว</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td>—</td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td><ul><li>การเตือนมีสถานะ SENT</li></ul></td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li><code>ReminderJob</code> เรียก <code>dispatchDueReminders()</code></li><li>ระบบหาการเตือนสถานะ SCHEDULED ที่วันเตือน ≤ วันนี้</li><li>ทำ UC24 กับการเตือนแต่ละรายการ</li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td><ul><li>งานเกิดข้อผิดพลาด → บันทึกลง log</li></ul></td></tr>
+</table><table class="uc">
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>UC24</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>Deliver reminder notification (ส่งการแจ้งเตือน)</td></tr>
+<tr><th>Actor หลัก</th><td>System</td></tr>
+<tr><th>คำอธิบาย</th><td>ระบบส่งการเตือนที่ถึงกำหนดหนึ่งรายการผ่านช่องทางที่เลือกไว้</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td><ul><li>การเตือนถึงกำหนดแล้ว</li></ul></td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td><ul><li>เพิ่มแถวใน <code>notifications</code> และการเตือนมีสถานะ SENT</li></ul></td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td><ol><li>ระบบ publish <code>ReminderDueEvent</code></li><li><code>NotificationSenderFactory.forChannel()</code> เลือกตัวส่ง</li><li>ตัวส่งเรียก <code>send()</code> เพื่อส่งการแจ้งเตือน</li><li>ระบบบันทึกแถวใน <code>notifications</code></li></ol></td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td><ul><li>เลือก EMAIL แต่ไม่มี mail server → ข้ามการส่งอีเมล (บันทึกลง log) แต่ยังบันทึกข้อมูลไว้</li></ul></td></tr>
+</table>
+</body></html>

@@ -1,0 +1,249 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1210" height="2460" viewBox="0 0 1210 2460">
+<rect width="100%" height="100%" fill="#fff"/>
+<text x="605.0" y="28.0" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="bold" text-anchor="middle" fill="#000">Activity Diagram — From opening a movie page to a diary entry</text>
+<rect x="20.0" y="50.0" width="1170.0" height="2390.0" rx="0" fill="none" stroke="#000" stroke-width="1.2"/>
+<line x1="520.0" y1="50.0" x2="520.0" y2="2440.0" stroke="#000" stroke-width="1.2"/>
+<line x1="20.0" y1="85.0" x2="1190.0" y2="85.0" stroke="#000" stroke-width="1.2"/>
+<text x="270.0" y="73.0" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#000">Member</text>
+<text x="855.0" y="73.0" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="bold" text-anchor="middle" fill="#000">System</text>
+<rect x="242.8" y="159.0" width="194.4" height="32.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="340.0" y="179.6" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Open movie page /movies/:id</text>
+<rect x="676.2" y="151.0" width="227.6" height="48.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="790.0" y="171.6" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">GET /api/v1/movies/:id</text>
+<text x="790.0" y="187.6" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">(MovieQueryServiceImpl.getDetail)</text>
+<polygon points="790.0,232.0 845.0,255.0 790.0,278.0 735.0,255.0" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="790.0" y="259.2" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="middle" fill="#000">movie exists?</text>
+<rect x="993.0" y="231.0" width="94.0" height="48.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="1040.0" y="251.6" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Return 404,</text>
+<text x="1040.0" y="267.6" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">show error</text>
+<rect x="714.5" y="311.0" width="151.0" height="48.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="790.0" y="331.6" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Show details, reviews</text>
+<text x="790.0" y="347.6" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">and similar movies</text>
+<polygon points="790.0,392.0 850.0,415.0 790.0,438.0 730.0,415.0" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="790.0" y="419.2" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="middle" fill="#000">movie released?</text>
+<rect x="576.8" y="473.0" width="226.4" height="64.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="690.0" y="493.6" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Enabled: Like, Watchlist,</text>
+<text x="690.0" y="509.6" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Add to collection, Remind me</text>
+<text x="690.0" y="525.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Disabled: Watched / Rate / Review</text>
+<rect x="914.3" y="457.0" width="171.5" height="96.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="1000.0" y="477.6" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Enabled: Like, Watchlist,</text>
+<text x="1000.0" y="493.6" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Add to collection,</text>
+<text x="1000.0" y="509.6" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Watched / Rate / Review,</text>
+<text x="1000.0" y="525.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">edit or delete own entry</text>
+<text x="1000.0" y="541.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Disabled: Remind me</text>
+<polygon points="790.0,583.0 813.0,600.0 790.0,617.0 767.0,600.0" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<polygon points="155.0,635.0 210.0,660.0 155.0,685.0 100.0,660.0" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="155.0" y="664.2" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="middle" fill="#000">action?</text>
+<rect x="657.6" y="716.0" width="264.9" height="48.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="790.0" y="736.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Toggle like</text>
+<text x="790.0" y="752.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">(PUT / DELETE /users/me/likes/:movieId)</text>
+<rect x="645.6" y="791.0" width="288.7" height="48.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="790.0" y="811.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Toggle watchlist</text>
+<text x="790.0" y="827.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">(PUT / DELETE /users/me/watchlist/:movieId)</text>
+<rect x="269.5" y="866.0" width="140.9" height="48.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="340.0" y="886.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Tick collections</text>
+<text x="340.0" y="902.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">or create a new one</text>
+<rect x="637.7" y="866.0" width="304.7" height="48.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="790.0" y="886.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Add / remove movie</text>
+<text x="790.0" y="902.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">(PUT / DELETE /collections/:id/movies/:movieId)</text>
+<polygon points="340.0,952.0 400.0,975.0 340.0,998.0 280.0,975.0" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="340.0" y="979.2" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="middle" fill="#000">save or remove?</text>
+<rect x="660.3" y="943.0" width="259.4" height="64.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="790.0" y="963.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Cancel reminder, status CANCELLED</text>
+<text x="790.0" y="979.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">(DELETE /users/me/reminders/:movieId,</text>
+<text x="790.0" y="995.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">ReminderServiceImpl.cancel)</text>
+<rect x="256.5" y="1041.0" width="166.9" height="48.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="340.0" y="1061.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Choose 7 / 3 / 1 / 0 days</text>
+<text x="340.0" y="1077.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">and IN_APP or EMAIL</text>
+<rect x="672.2" y="1041.0" width="235.6" height="48.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="790.0" y="1061.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Save reminder, status SCHEDULED</text>
+<text x="790.0" y="1077.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">(ReminderServiceImpl.save)</text>
+<polygon points="790.0,1117.0 895.0,1145.0 790.0,1173.0 685.0,1145.0" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="790.0" y="1142.2" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="middle" fill="#000">reminder date already</text>
+<text x="790.0" y="1156.2" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="middle" fill="#000">reached?</text>
+<rect x="594.7" y="1201.0" width="190.5" height="48.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="690.0" y="1221.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Send notification now,</text>
+<text x="690.0" y="1237.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">status SENT (dispatchIfDue)</text>
+<rect x="850.3" y="1201.0" width="109.3" height="48.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="905.0" y="1221.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Wait for hourly</text>
+<text x="905.0" y="1237.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">ReminderJob</text>
+<polygon points="790.0,1278.0 813.0,1295.0 790.0,1312.0 767.0,1295.0" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<polygon points="340.0,1353.0 363.0,1370.0 340.0,1387.0 317.0,1370.0" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<rect x="284.7" y="1416.0" width="110.5" height="48.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="340.0" y="1436.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Fill date, stars,</text>
+<text x="340.0" y="1452.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">review, place</text>
+<polygon points="790.0,1402.0 885.0,1440.0 790.0,1478.0 695.0,1440.0" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="790.0" y="1430.2" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="middle" fill="#000">date &lt;= today,</text>
+<text x="790.0" y="1444.2" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="middle" fill="#000">movie released,</text>
+<text x="790.0" y="1458.2" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="middle" fill="#000">rating 1-5?</text>
+<rect x="1002.6" y="1416.0" width="114.9" height="48.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="1060.0" y="1436.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Show error,</text>
+<text x="1060.0" y="1452.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">stay in the form</text>
+<rect x="703.7" y="1511.0" width="172.7" height="48.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="790.0" y="1531.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Save diary entry</text>
+<text x="790.0" y="1547.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">(DiaryServiceImpl.create)</text>
+<rect x="692.1" y="1589.0" width="195.8" height="32.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="790.0" y="1609.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Remove movie from watchlist</text>
+<polygon points="790.0,1652.0 855.0,1675.0 790.0,1698.0 725.0,1675.0" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="790.0" y="1679.2" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="middle" fill="#000">review written?</text>
+<rect x="625.7" y="1726.0" width="128.7" height="48.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="690.0" y="1746.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">In-app notification</text>
+<text x="690.0" y="1762.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">&quot;review added&quot;</text>
+<polygon points="790.0,1803.0 813.0,1820.0 790.0,1837.0 767.0,1820.0" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<rect x="723.9" y="1861.0" width="132.3" height="48.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="790.0" y="1881.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Poster appears on</text>
+<text x="790.0" y="1897.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">the calendar day</text>
+<polygon points="340.0,1947.0 400.0,1970.0 340.0,1993.0 280.0,1970.0" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="340.0" y="1974.2" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="middle" fill="#000">edit or delete?</text>
+<rect x="704.0" y="1946.0" width="172.0" height="48.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="790.0" y="1966.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Delete entry</text>
+<text x="790.0" y="1982.5" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">(DiaryServiceImpl.delete)</text>
+<rect x="270.3" y="2031.0" width="139.5" height="48.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="340.0" y="2051.6" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Change date, stars,</text>
+<text x="340.0" y="2067.6" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">review, place</text>
+<rect x="688.5" y="2031.0" width="203.1" height="48.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="790.0" y="2051.6" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">Check date rules, update entry</text>
+<text x="790.0" y="2067.6" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">(DiaryServiceImpl.update)</text>
+<polygon points="790.0,2112.0 865.0,2135.0 790.0,2158.0 715.0,2135.0" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="790.0" y="2139.2" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="middle" fill="#000">first review added?</text>
+<rect x="625.7" y="2186.0" width="128.7" height="48.0" rx="10" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<text x="690.0" y="2206.6" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">In-app notification</text>
+<text x="690.0" y="2222.6" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">&quot;review added&quot;</text>
+<polygon points="790.0,2263.0 813.0,2280.0 790.0,2297.0 767.0,2280.0" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<polygon points="1110.0,2323.0 1170.0,2345.0 1110.0,2367.0 1050.0,2345.0" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<circle cx="340.0" cy="115.0" r="11" fill="#000" stroke="#000" stroke-width="1.2"/>
+<circle cx="1040.0" cy="325.0" r="12" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<circle cx="1040.0" cy="325.0" r="7" fill="#000" stroke="#000" stroke-width="1.2"/>
+<circle cx="1110.0" cy="2410.0" r="12" fill="#fff" stroke="#000" stroke-width="1.2"/>
+<circle cx="1110.0" cy="2410.0" r="7" fill="#000" stroke="#000" stroke-width="1.2"/>
+<polyline points="340.0,126.0 340.0,159.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="335.9,149.9 340.0,159.0 344.1,149.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="437.2,175.0 676.2,175.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="667.1,179.1 676.2,175.0 667.1,170.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="790.0,199.0 790.0,232.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="785.9,222.9 790.0,232.0 794.1,222.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="845.0,255.0 993.0,255.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="983.9,259.1 993.0,255.0 983.9,250.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="851.0" y="248.0" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="start" fill="#000">No</text>
+<polyline points="1040.0,279.0 1040.0,313.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="1035.9,303.9 1040.0,313.0 1044.1,303.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="790.0,278.0 790.0,311.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="785.9,301.9 790.0,311.0 794.1,301.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="796.0" y="290.0" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="start" fill="#000">Yes</text>
+<polyline points="790.0,359.0 790.0,392.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="785.9,382.9 790.0,392.0 794.1,382.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="730.0,415.0 690.0,415.0 690.0,473.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="685.9,463.9 690.0,473.0 694.1,463.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="696.0" y="408.0" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="start" fill="#000">No</text>
+<polyline points="850.0,415.0 1000.0,415.0 1000.0,457.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="995.9,447.9 1000.0,457.0 1004.1,447.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="1006.0" y="408.0" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="start" fill="#000">Yes</text>
+<polyline points="690.0,537.0 690.0,600.0 767.0,600.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="757.9,604.1 767.0,600.0 757.9,595.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="1000.0,553.0 1000.0,600.0 813.0,600.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="822.1,595.9 813.0,600.0 822.1,604.1" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="790.0,617.0 790.0,660.0 210.0,660.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="219.1,655.9 210.0,660.0 219.1,664.1" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="185.0,671.4 185.0,740.0 657.6,740.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="648.4,744.1 657.6,740.0 648.4,735.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="193.0" y="734.0" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="start" fill="#000">Like</text>
+<polyline points="170.0,678.2 170.0,815.0 645.6,815.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="636.5,819.1 645.6,815.0 636.5,810.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="178.0" y="809.0" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="start" fill="#000">Watchlist</text>
+<polyline points="155.0,685.0 155.0,890.0 269.5,890.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="260.4,894.1 269.5,890.0 260.4,885.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="163.0" y="884.0" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="start" fill="#000">Add to collection</text>
+<polyline points="140.0,678.2 140.0,975.0 280.0,975.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="270.9,979.1 280.0,975.0 270.9,970.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="148.0" y="969.0" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="start" fill="#000">Remind me [not released]</text>
+<polyline points="125.0,671.4 125.0,1370.0 317.0,1370.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="307.9,1374.1 317.0,1370.0 307.9,1365.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="133.0" y="1364.0" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="start" fill="#000">Watched / Rate / Review [released]</text>
+<polyline points="110.0,664.5 110.0,1970.0 280.0,1970.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="270.9,1974.1 280.0,1970.0 270.9,1965.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="118.0" y="1964.0" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="start" fill="#000">Edit or delete entry [own entry]</text>
+<polyline points="410.5,890.0 637.7,890.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="628.5,894.1 637.7,890.0 628.5,885.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="400.0,975.0 660.3,975.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="651.2,979.1 660.3,975.0 651.2,970.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="406.0" y="968.0" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="start" fill="#000">remove [reminder exists]</text>
+<polyline points="340.0,998.0 340.0,1041.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="335.9,1031.9 340.0,1041.0 344.1,1031.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="346.0" y="1012.0" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="start" fill="#000">save / update</text>
+<polyline points="423.5,1065.0 672.2,1065.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="663.1,1069.1 672.2,1065.0 663.1,1060.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="790.0,1089.0 790.0,1117.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="785.9,1107.9 790.0,1117.0 794.1,1107.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="685.0,1145.0 690.0,1145.0 690.0,1201.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="685.9,1191.9 690.0,1201.0 694.1,1191.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="696.0" y="1138.0" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="start" fill="#000">Yes</text>
+<polyline points="895.0,1145.0 905.0,1145.0 905.0,1201.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="900.9,1191.9 905.0,1201.0 909.1,1191.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="911.0" y="1138.0" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="start" fill="#000">No</text>
+<polyline points="690.0,1249.0 690.0,1295.0 767.0,1295.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="757.9,1299.1 767.0,1295.0 757.9,1290.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="905.0,1249.0 905.0,1295.0 813.0,1295.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="822.1,1290.9 813.0,1295.0 822.1,1299.1" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="340.0,1387.0 340.0,1416.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="335.9,1406.9 340.0,1416.0 344.1,1406.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="395.3,1440.0 695.0,1440.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="685.9,1444.1 695.0,1440.0 685.9,1435.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="885.0,1440.0 1002.6,1440.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="993.4,1444.1 1002.6,1440.0 993.4,1435.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="890.0" y="1433.0" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="start" fill="#000">No</text>
+<polyline points="1060.0,1416.0 1060.0,1370.0 363.0,1370.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="372.1,1365.9 363.0,1370.0 372.1,1374.1" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="790.0,1478.0 790.0,1511.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="785.9,1501.9 790.0,1511.0 794.1,1501.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="796.0" y="1492.0" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="start" fill="#000">Yes</text>
+<polyline points="790.0,1559.0 790.0,1589.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="785.9,1579.9 790.0,1589.0 794.1,1579.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="790.0,1621.0 790.0,1652.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="785.9,1642.9 790.0,1652.0 794.1,1642.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="725.0,1675.0 690.0,1675.0 690.0,1726.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="685.9,1716.9 690.0,1726.0 694.1,1716.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="696.0" y="1668.0" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="start" fill="#000">Yes</text>
+<polyline points="855.0,1675.0 905.0,1675.0 905.0,1820.0 813.0,1820.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="822.1,1815.9 813.0,1820.0 822.1,1824.1" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="911.0" y="1668.0" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="start" fill="#000">No</text>
+<polyline points="690.0,1774.0 690.0,1820.0 767.0,1820.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="757.9,1824.1 767.0,1820.0 757.9,1815.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="790.0,1837.0 790.0,1861.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="785.9,1851.9 790.0,1861.0 794.1,1851.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="400.0,1970.0 704.0,1970.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="694.9,1974.1 704.0,1970.0 694.9,1965.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="406.0" y="1963.0" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="start" fill="#000">delete</text>
+<polyline points="340.0,1993.0 340.0,2031.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="335.9,2021.9 340.0,2031.0 344.1,2021.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="346.0" y="2008.0" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="start" fill="#000">edit</text>
+<polyline points="409.7,2055.0 688.5,2055.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="679.3,2059.1 688.5,2055.0 679.3,2050.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="790.0,2079.0 790.0,2112.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="785.9,2102.9 790.0,2112.0 794.1,2102.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="715.0,2135.0 690.0,2135.0 690.0,2186.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="685.9,2176.9 690.0,2186.0 694.1,2176.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="696.0" y="2128.0" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="start" fill="#000">Yes</text>
+<polyline points="865.0,2135.0 905.0,2135.0 905.0,2280.0 813.0,2280.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="822.1,2275.9 813.0,2280.0 822.1,2284.1" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="911.0" y="2128.0" font-family="Arial, Helvetica, sans-serif" font-size="12" text-anchor="start" fill="#000">No</text>
+<polyline points="690.0,2234.0 690.0,2280.0 767.0,2280.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="757.9,2284.1 767.0,2280.0 757.9,2275.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="922.4,740.0 1162.0,740.0 1162.0,2342.1" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="1157.9,2332.9 1162.0,2342.1 1166.1,2332.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="934.4,815.0 1150.0,815.0 1150.0,2337.7" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="1145.9,2328.5 1150.0,2337.7 1154.1,2328.5" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="942.3,890.0 1138.0,890.0 1138.0,2333.3" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="1133.9,2324.1 1138.0,2333.3 1142.1,2324.1" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="919.7,975.0 1126.0,975.0 1126.0,2328.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="1121.9,2319.7 1126.0,2328.9 1130.1,2319.7" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="813.0,1295.0 1114.0,1295.0 1114.0,2324.5" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="1109.9,2315.3 1114.0,2324.5 1118.1,2315.3" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="856.1,1885.0 1102.0,1885.0 1102.0,2325.9" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="1097.9,2316.8 1102.0,2325.9 1106.1,2316.8" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="876.0,1970.0 1090.0,1970.0 1090.0,2330.3" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="1085.9,2321.2 1090.0,2330.3 1094.1,2321.2" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="813.0,2280.0 1078.0,2280.0 1078.0,2334.7" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="1073.9,2325.6 1078.0,2334.7 1082.1,2325.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="1110.0,2367.0 1110.0,2397.0" fill="none" stroke="#000" stroke-width="1.2"/>
+<polyline points="1105.9,2387.9 1110.0,2397.0 1114.1,2387.9" fill="none" stroke="#000" stroke-width="1.2"/>
+</svg>

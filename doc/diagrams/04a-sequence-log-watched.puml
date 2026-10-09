@@ -1,0 +1,72 @@
+@startuml
+!include _style.iuml
+skinparam sequenceMessageAlign left
+skinparam ParticipantPadding 12
+skinparam BoxPadding 10
+hide footbox
+title Sequence Diagram 1 — Log a watched movie
+
+autonumber
+actor "Member" as U
+participant "log-modal.js" as JS
+participant "DiaryController" as C
+participant "DiaryServiceImpl" as S
+participant "MovieRepository" as MR
+participant "UserRepository" as UR
+participant "WatchedMovieRepository" as WR
+participant "WatchlistServiceImpl" as WL
+participant "WatchlistItemRepository" as WLR
+participant "ApplicationEventPublisher" as P
+participant "NotificationEventListener" as L
+participant "NotificationSenderFactory" as F
+participant "InAppNotificationSender" as IA
+participant "NotificationRepository" as NR
+database "PostgreSQL" as DB
+  U -> JS : date, stars, review, place → Save to Diary
+  JS -> C ++ : POST /api/v1/users/me/diary (DiaryEntryRequest)
+  alt request body invalid (@Valid)
+    C --> JS : 400 ErrorResponse + fieldErrors
+  else valid
+    C -> S ++ : create(userId, request)
+    S -> MR : findById(movieId)
+    MR -> DB : SELECT movies
+    DB --> MR : row
+    MR --> S : Optional<Movie>
+    alt movie not found
+      S --> C : ResourceNotFoundException
+      C --> JS : 404 ErrorResponse
+    else found
+      S -> S : checkDate(movie, watchedDate)
+      alt date in the future or movie not released
+        S --> C : BusinessRuleException
+        C --> JS : 400 ErrorResponse
+      else date ok
+        S -> UR : getReferenceById(userId)
+        S -> WR : save(new WatchedMovie(...))
+        WR -> DB : INSERT watched_movies
+        S -> WL : remove(userId, movieId)
+        WL -> WLR : findByUserIdAndMovieId(userId, movieId)
+        WLR -> DB : SELECT watchlist_items
+        opt movie was on the watchlist
+          WL -> WLR : delete(item)
+          WLR -> DB : DELETE watchlist_items
+        end
+        S -> P : publishEvent(DiaryEntryLoggedEvent)
+        P -> L ++ : onDiaryEntryLogged(event)
+        opt event.reviewAdded()
+          L -> F : forChannel(IN_APP)
+          F --> L : InAppNotificationSender
+          L -> IA : send(NotificationMessage REVIEW_ADDED)
+          IA -> IA : load User / Movie, deliver() (empty for in-app)
+          IA -> NR : save(new Notification(...))
+          NR -> DB : INSERT notifications
+        end
+        L --> P -- : return
+        P --> S : return
+        S --> C -- : DiaryEntryResponse
+        C --> JS -- : 201 Created + Location
+      end
+    end
+  end
+  JS --> U : toast + poster on the calendar day
+@enduml

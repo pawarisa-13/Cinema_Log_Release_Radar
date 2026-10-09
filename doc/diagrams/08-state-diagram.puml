@@ -1,0 +1,32 @@
+@startuml
+!include _style.iuml
+hide empty description
+skinparam roundCorner 22
+skinparam nodesep 90
+skinparam ranksep 110
+title State Machine Diagram — Reminder (ReminderStatus)
+
+state SCHEDULED
+state SENT
+state CANCELLED
+
+[*] --> SCHEDULED : new Reminder(...)\n— save() for a new reminder
+SCHEDULED --> SENT : markSent() / send()\n— date reached (ReminderJob hourly,\nor dispatchIfDue right after save)
+SCHEDULED --> SCHEDULED : reschedule()\n— save() again with\nnew days / channel
+SCHEDULED --> CANCELLED : cancel()\n— user removes it
+SENT --> SCHEDULED : reschedule()\n— save() again
+SENT --> CANCELLED : cancel()\n— user removes it
+CANCELLED --> SCHEDULED : reschedule()\n— save() again
+CANCELLED --> CANCELLED : cancel()\n— removed again
+
+note bottom of SENT
+  send() throws BusinessRuleException
+  "This reminder was already sent."
+  (state does not change)
+end note
+note bottom of CANCELLED
+  send() throws BusinessRuleException
+  "A cancelled reminder cannot be sent."
+  isActive() = false (only this state)
+end note
+@enduml
