@@ -29,6 +29,6 @@
 
 ![Deployment diagram](07-deployment.svg)
 
-- **ปัจจุบัน** — แอป**ยังไม่ได้** deploy จริง ตอนนี้รันแค่บนโน้ตบุ๊กของนักพัฒนา (`http://localhost:8080`) โดยต่อกับฐานข้อมูล Supabase PostgreSQL ของทีม (log ตอนรันแสดงเป็น PostgreSQL 17.11; JRE 21 มาจาก Java extension ของ VS Code — ตัวโปรเจกต์กำหนดเป็น Java 17 ใน `pom.xml`) ผ่าน session pooler (port 5432, SSL) ส่วน GitHub Actions (`.github/workflows/ci.yml`) จะ build และรันเทสต์เมื่อมีการ push / PR ไปที่ `main` และ `develop`
-- **ที่วางแผนไว้** — อ้างอิงจาก `Dockerfile` (build ด้วย `maven:3.9-eclipse-temurin-17`, รันด้วย `eclipse-temurin:17-jre`, คัดลอก `cinema-log.jar` ไปเป็น `/app/app.jar`, port 8080, `TZ=Asia/Bangkok`) และ job `deploy` ใน `ci.yml` (เรียก `RENDER_DEPLOY_HOOK` เมื่อ push ไปที่ `main` และข้ามไปถ้ายังไม่ได้ตั้ง secret) ตอนนี้ยังไม่มี URL สาธารณะ
+- **Production** — deploy แล้วที่ https://poppy-night.onrender.com บน Render (Web Service แบบ Docker, region Singapore, Free 0.1 CPU / 512 MB) build จาก `Dockerfile` (build ด้วย `maven:3.9-eclipse-temurin-17`, รันด้วย `eclipse-temurin:17-jre`, `TZ=Asia/Bangkok`) แล้วต่อกับฐานข้อมูล Supabase PostgreSQL โปรเจกต์ production ที่สิงคโปร์ผ่าน session pooler (port 5432, SSL) Render เช็ก `/actuator/health` และ deploy ใหม่เองเมื่อมี commit เข้า `main` และ GitHub Actions ผ่าน (Auto-Deploy: After CI Checks Pass)
+- **Development** — แต่ละคนรันบนเครื่องตัวเอง (`http://localhost:8080`) โดยต่อกับฐานข้อมูล Supabase ของทีมอีกโปรเจกต์หนึ่ง (แยกจาก production) ส่วน GitHub Actions (`.github/workflows/ci.yml`) จะ build และรันเทสต์เมื่อมีการ push / PR ไปที่ `main` และ `develop`
 - `docker-compose.yml` (app + `postgres:16-alpine`) เป็นทางเลือกสำหรับรันในเครื่อง และไม่ได้อยู่ในมุมมองใดของแผนภาพ
