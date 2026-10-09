@@ -14,7 +14,7 @@ const movieId = +$('#main').dataset.movieId;
 async function render() {
     const [m, rv, similar] = await Promise.all([movies.get(movieId), reviews.forMovie(movieId), movies.similar(movieId, 12)]);
     cache(m);
-    document.title = `${m.title} · Cinema Log`;
+    document.title = `${m.title}  · Poppy Night`;
     const entry = st.watched.get(m.id), rem = st.reminders.get(m.id), out = m.released;
     const mine = rv.reviews.find(r => r.mine);
     $('#page').innerHTML = `
