@@ -1,0 +1,32 @@
+# Local run: docker compose up --build   → http://localhost:8080  (register a new account; demo password is shared privately)
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: cinemalog
+      POSTGRES_USER: cinemalog
+      POSTGRES_PASSWORD: cinemalog
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cinemalog"]
+      interval: 5s
+      retries: 10
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/cinemalog
+      DB_USERNAME: cinemalog
+      DB_PASSWORD: cinemalog
+      TMDB_API_KEY: ${TMDB_API_KEY:-}
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:

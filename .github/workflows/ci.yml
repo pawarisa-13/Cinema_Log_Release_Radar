@@ -1,0 +1,44 @@
+# CI: build + test on every push / PR; on main, ask Render to deploy (bonus requirement).
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Build and test
+        run: mvn -B -f code/pom.xml verify
+      - name: Test report
+        if: always()
+        run: mvn -B -f code/pom.xml surefire-report:report-only -DskipTests
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-reports
+          path: |
+            code/target/surefire-reports/
+            code/target/reports/
+            code/target/site/
+
+  deploy:
+    needs: build-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then echo "RENDER_DEPLOY_HOOK not set, skipping"; exit 0; fi
+          curl -fsS -X POST "$HOOK"
