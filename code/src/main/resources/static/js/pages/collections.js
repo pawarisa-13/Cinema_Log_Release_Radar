@@ -21,7 +21,7 @@ async function renderOne() {
     $('#page').innerHTML = emptyState(D.kid('box'), 'that collection is gone', 'It may have been deleted.', '<a class="btn" href="/collections">All collections</a>');
     return;
   }
-  document.title = `${c.name} · Cinema Log`;
+  document.title = `${c.name} 	· Poppy Night`;
   $('#page').innerHTML = `${secHead(esc(c.name), { note: esc(c.description || `${c.movies.length} films`), more: `<button class="btn ghost sm" data-act="edit-collection" data-name="${esc(c.name)}" data-desc="${esc(c.description || '')}">${ic('pencil')}Rename</button><button class="btn ghost danger sm" data-act="del-collection">${ic('trash')}Delete collection</button>` })}
     ${c.movies.length ? `<p class="hint" style="margin-top:4px">${c.movies.length} films · add more from any movie’s ⋯ menu</p>
       <div class="grid" style="margin-top:20px">${c.movies.map(m => `<div>${card(m)}<button class="link" style="margin-top:4px;font-size:.8rem" data-act="col-remove" data-id="${m.id}">${ic('x')}remove</button></div>`).join('')}</div>`

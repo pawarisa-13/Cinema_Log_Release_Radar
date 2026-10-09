@@ -1,0 +1,95 @@
+@startuml
+!include _style.iuml
+hide circle
+skinparam nodesep 35
+skinparam ranksep 60
+title Class Diagram (3/3) — Reminders: State; cross-cutting: Singleton beans, exception handling
+
+class ReminderController {
+  +save(Long movieId, ReminderRequest) : ReminderResponse
+  +cancel(Long movieId)
+}
+interface ReminderService <<interface>> {
+  +save(Long userId, Long movieId, ReminderRequest) : ReminderResponse
+  +cancel(Long userId, Long movieId)
+}
+interface CurrentUserProvider <<interface>> {
+  +currentUserId() : Optional<Long>
+  +requireUserId() : Long
+}
+class ReminderServiceImpl {
+  ~ALLOWED_OFFSETS : Set<Integer>
+}
+interface ReminderDispatchService <<interface>> {
+  +dispatchDueReminders() : int
+  +dispatchIfDue(Reminder) : boolean
+}
+class ReminderDispatchServiceImpl {
+}
+interface ReminderRepository <<interface>> {
+  +findByUserIdAndMovieId(Long, Long) : Optional<Reminder>
+  +findByStatusAndReminderDateLessThanEqual(ReminderStatus, LocalDate) : List<Reminder>
+}
+interface MovieRepository <<interface>> {
+  +findByTmdbId(Long) : Optional<Movie>
+}
+interface UserRepository <<interface>> {
+}
+class ReminderJob {
+  +run()
+}
+interface ApplicationEventPublisher <<interface>> {
+  +publishEvent(Object event)
+}
+class ReminderDueEvent <<record>> {
+  reminderId
+  userId
+  movieId
+  message
+  channel
+}
+class Reminder {
+  -status : ReminderStatus
+  +reschedule(int offsetDays, NotificationChannel)
+  +markSent(Instant)
+  +cancel()
+  +isDueOn(LocalDate) : boolean
+}
+enum ReminderStatus <<enumeration>> <<State>> {
+  SCHEDULED
+  SENT
+  CANCELLED
+  +send() : ReminderStatus
+  +cancel() : ReminderStatus
+  +reschedule() : ReminderStatus
+  +isActive() : boolean
+}
+class GlobalExceptionHandler {
+  +handleApi(ApiException, HttpServletRequest) : ResponseEntity
+  +handleBodyValidation(MethodArgumentNotValidException, HttpServletRequest) : ResponseEntity
+}
+class ClockConfig <<Singleton>> {
+  +clock(AppProperties) : Clock
+}
+class TmdbClientConfig <<Singleton>> {
+  +tmdbRestClient(TmdbProperties) : RestClient
+}
+class SecurityConfig <<Singleton>> {
+  +passwordEncoder() : PasswordEncoder
+}
+
+ReminderController --> ReminderService
+ReminderController --> CurrentUserProvider
+ReminderService <|.. ReminderServiceImpl
+ReminderDispatchService <|.. ReminderDispatchServiceImpl
+ReminderServiceImpl --> ReminderRepository
+ReminderServiceImpl --> MovieRepository
+ReminderServiceImpl --> UserRepository
+ReminderServiceImpl --> ReminderDispatchService
+ReminderJob --> ReminderDispatchService
+ReminderDispatchServiceImpl --> ReminderRepository
+ReminderDispatchServiceImpl --> ApplicationEventPublisher
+ReminderDispatchServiceImpl ..> ReminderDueEvent : creates
+ReminderRepository ..> Reminder
+Reminder --> ReminderStatus : state
+@enduml
