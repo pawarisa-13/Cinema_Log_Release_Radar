@@ -1,0 +1,120 @@
+@startuml
+!include _style.iuml
+hide circle
+skinparam nodesep 35
+skinparam ranksep 60
+title Class Diagram (2/3) — Diary, collections, notifications: Observer, Factory, Strategy, Template Method
+
+class DiaryController {
+  +create(DiaryEntryRequest) : ResponseEntity
+  +update(Long id, UpdateDiaryEntryRequest) : DiaryEntryResponse
+  +delete(Long id)
+}
+interface DiaryQueryService <<interface>> {
+  +month(Long userId, YearMonth month) : List
+}
+interface DiaryCommandService <<interface>> {
+  +create(Long userId, DiaryEntryRequest) : DiaryEntryResponse
+  +update(Long userId, Long entryId, UpdateDiaryEntryRequest) : DiaryEntryResponse
+  +delete(Long userId, Long entryId)
+}
+interface CurrentUserProvider <<interface>> {
+  +currentUserId() : Optional<Long>
+  +requireUserId() : Long
+}
+class CollectionController {
+  +create(CollectionRequest) : ResponseEntity
+  +addMovie(Long id, Long movieId) : CollectionDetailResponse
+}
+interface CollectionService <<interface>> {
+  +create(Long userId, CollectionRequest) : CollectionDetailResponse
+}
+class DiaryServiceImpl {
+  ~checkDate(Movie, LocalDate)
+}
+class CollectionServiceImpl {
+}
+interface WatchedMovieRepository <<interface>> {
+}
+interface MovieRepository <<interface>> {
+  +findByTmdbId(Long) : Optional<Movie>
+}
+interface UserRepository <<interface>> {
+}
+interface WatchlistService <<interface>> {
+  +remove(Long userId, Long movieId)
+}
+interface ApplicationEventPublisher <<interface>> {
+  +publishEvent(Object event)
+}
+class DiaryEntryLoggedEvent <<record>> {
+  userId
+  movieId
+  movieTitle
+  reviewAdded
+}
+interface MovieCollectionRepository <<interface>> {
+}
+class NotificationEventListener <<Observer>> {
+  +onReminderDue(ReminderDueEvent)
+  +onDiaryEntryLogged(DiaryEntryLoggedEvent)
+}
+class ReminderDueEvent <<record>> {
+  reminderId
+  userId
+  movieId
+  message
+  channel
+}
+class NotificationSenderFactory <<Factory>> {
+  -senders : Map<NotificationChannel, NotificationSender>
+  +forChannel(NotificationChannel) : NotificationSender
+}
+interface NotificationSender <<interface>> <<Strategy>> {
+  +channel() : NotificationChannel
+  +send(NotificationMessage)
+}
+abstract class AbstractNotificationSender <<abstract>> <<Template Method>> {
+  +send(NotificationMessage) {final}
+  {abstract} #deliver(User, NotificationMessage)
+  #recordText(NotificationMessage) : String
+}
+class InAppNotificationSender {
+}
+class EmailNotificationSender {
+}
+interface NotificationRepository <<interface>> {
+}
+
+DiaryController --> DiaryQueryService
+DiaryController --> DiaryCommandService
+DiaryController --> CurrentUserProvider
+CollectionController --> CollectionService
+CollectionController --> CurrentUserProvider
+DiaryQueryService <|.. DiaryServiceImpl
+DiaryCommandService <|.. DiaryServiceImpl
+CollectionService <|.. CollectionServiceImpl
+DiaryServiceImpl --> WatchedMovieRepository
+DiaryServiceImpl --> MovieRepository
+DiaryServiceImpl --> UserRepository
+DiaryServiceImpl --> WatchlistService
+DiaryServiceImpl --> ApplicationEventPublisher
+DiaryServiceImpl ..> DiaryEntryLoggedEvent : creates
+CollectionServiceImpl --> MovieCollectionRepository
+CollectionServiceImpl --> MovieRepository
+ApplicationEventPublisher ..> NotificationEventListener : delivers events
+NotificationEventListener ..> ReminderDueEvent : handles
+NotificationEventListener ..> DiaryEntryLoggedEvent : handles
+NotificationEventListener --> NotificationSenderFactory
+NotificationSenderFactory o-- NotificationSender
+NotificationSender <|.. AbstractNotificationSender
+AbstractNotificationSender <|-- InAppNotificationSender
+AbstractNotificationSender <|-- EmailNotificationSender
+AbstractNotificationSender --> NotificationRepository
+
+note bottom of AbstractNotificationSender
+  send() is final:
+  load user → deliver() → save Notification
+end note
+note right of NotificationEventListener : @EventListener
+@enduml

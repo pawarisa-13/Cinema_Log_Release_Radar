@@ -1,0 +1,55 @@
+@startuml
+!include _style.iuml
+skinparam sequenceMessageAlign left
+skinparam ParticipantPadding 12
+skinparam BoxPadding 10
+hide footbox
+title Sequence Diagram 3 — Search the catalog (with TMDB import)
+
+autonumber
+actor "Member" as U
+participant "catalog.js" as JS
+participant "MovieController" as C
+participant "MovieQueryServiceImpl" as Q
+participant "MovieSyncServiceImpl" as Y
+participant "TmdbMovieCatalogAdapter" as A
+participant "TmdbClient" as TC
+participant "TMDB API" as T
+participant "MovieSpecificationBuilder" as B
+participant "MovieRepository" as R
+database "PostgreSQL" as DB
+  U -> JS : types "ghibli", genre = Animation
+  JS -> C ++ : GET /api/v1/movies?q=ghibli&genreId=16&page=0&size=40
+  C -> Q ++ : search(criteria)
+  opt text query AND page 0 AND catalogSource.isAvailable()
+    Q -> Y : importSearchResults("ghibli")
+    Y -> A : search("ghibli")
+    A -> TC : search("ghibli")
+    TC -> T : GET /search/movie?query=ghibli
+    alt TMDB responds
+      T --> TC : JSON
+      TC --> A : TmdbPageDto
+      A --> Y : List<ExternalMovie> (adapted)
+      loop each result (max 20, MAX_SEARCH_IMPORT)
+        Y -> R : findByTmdbId(tmdbId)
+        R -> DB : SELECT movies
+        Y -> R : save(movie)
+        R -> DB : INSERT / UPDATE movies
+      end
+      Y --> Q : count
+    else TMDB error
+      TC --> Y : ExternalServiceException
+      Y --> Q : ExternalServiceException (propagates)
+      Q -> Q : catch → log warning, keep local results
+    end
+  end
+  Q -> B : create().text().genre().year().decade()\n.releasedBefore().minRating().language().build()
+  B --> Q : Specification<Movie>
+  Q -> R : findAll(spec, PageRequest.of(0, 40, sort))
+  R -> DB : SELECT movies … LIMIT 40
+  DB --> R : rows
+  R --> Q : Page<Movie>
+  Q --> C -- : PageResponse<MovieSummaryResponse>
+  C --> JS -- : 200 JSON
+  JS --> U : grid + pager
+@enduml
