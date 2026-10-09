@@ -1,0 +1,142 @@
+@startuml
+!include _style.iuml
+hide circle
+skinparam nodesep 45
+skinparam ranksep 70
+title ER Diagram — physical schema (crow's foot notation), Flyway V1–V4
+
+entity "users" as users {
+  id : bigserial <<PK>>
+  --
+  email : varchar(255) <<UK>>
+  password_hash : varchar(100)  [BCrypt]
+  created_at : timestamptz
+}
+entity "user_profiles" as user_profiles {
+  id : bigserial <<PK>>
+  --
+  user_id : bigint <<FK,UK>>
+  display_name : varchar(60)
+  bio : varchar(200)  [NULL]
+  avatar_style : varchar(20)  [default BUN]
+  avatar_color : varchar(20)  [default PINK]
+  updated_at : timestamptz
+}
+entity "genres" as genres {
+  id : integer <<PK>>  [TMDB genre id]
+  --
+  name : varchar(50) <<UK>>
+}
+entity "movies" as movies {
+  id : bigserial <<PK>>
+  --
+  tmdb_id : bigint <<UK>>
+  title : varchar(300)
+  original_title : varchar(300)  [NULL]
+  overview : text  [NULL]
+  poster_path : varchar(200)  [NULL]
+  backdrop_path : varchar(200)  [NULL]
+  release_date : date  [NULL]
+  runtime : integer  [NULL]
+  vote_average : double  [default 0]
+  popularity : double  [default 0]
+  original_language : varchar(10)  [NULL]
+  director : varchar(200)  [NULL]
+  cast_names : varchar(500)  [NULL]
+  details_fetched_at : timestamptz  [NULL]
+  created_at : timestamptz
+}
+entity "movie_genres" as movie_genres {
+  movie_id : bigint <<PK,FK>>
+  genre_id : integer <<PK,FK>>
+  --
+}
+entity "user_favorite_genres" as user_favorite_genres {
+  profile_id : bigint <<PK,FK>>
+  genre_id : integer <<PK,FK>>
+  --
+}
+entity "watched_movies" as watched_movies {
+  id : bigserial <<PK>>
+  --
+  user_id : bigint <<FK>>
+  movie_id : bigint <<FK>>
+  watched_date : date
+  rating : integer  [NULL, CHECK 1-5]
+  review : varchar(1000)  [NULL]
+  place : varchar(10)  [default HOME, CHECK CINEMA/HOME/OTHER]
+  created_at : timestamptz
+  updated_at : timestamptz
+}
+entity "watchlist_items" as watchlist_items {
+  id : bigserial <<PK>>
+  --
+  user_id : bigint <<FK,UK>>  [UK(user_id, movie_id)]
+  movie_id : bigint <<FK,UK>>
+  added_at : timestamptz
+}
+entity "liked_movies" as liked_movies {
+  id : bigserial <<PK>>
+  --
+  user_id : bigint <<FK,UK>>  [UK(user_id, movie_id)]
+  movie_id : bigint <<FK,UK>>
+  liked_at : timestamptz
+}
+entity "collections" as collections {
+  id : bigserial <<PK>>
+  --
+  user_id : bigint <<FK,UK>>  [UK(user_id, name)]
+  name : varchar(60) <<UK>>
+  description : varchar(200)  [NULL]
+  created_at : timestamptz
+}
+entity "collection_movies" as collection_movies {
+  id : bigserial <<PK>>
+  --
+  collection_id : bigint <<FK,UK>>  [UK(collection_id, movie_id)]
+  movie_id : bigint <<FK,UK>>
+  added_at : timestamptz
+}
+entity "reminders" as reminders {
+  id : bigserial <<PK>>
+  --
+  user_id : bigint <<FK,UK>>  [UK(user_id, movie_id)]
+  movie_id : bigint <<FK,UK>>
+  offset_days : integer  [CHECK 0/1/3/7]
+  reminder_date : date
+  channel : varchar(10)  [default IN_APP, CHECK IN_APP/EMAIL]
+  status : varchar(12)  [default SCHEDULED, CHECK SCHEDULED/SENT/CANCELLED]
+  created_at : timestamptz
+  sent_at : timestamptz  [NULL]
+}
+entity "notifications" as notifications {
+  id : bigserial <<PK>>
+  --
+  user_id : bigint <<FK>>
+  movie_id : bigint <<FK>>  [NULL]
+  type : varchar(20)
+  channel : varchar(10)
+  message : varchar(300)
+  is_read : boolean  [default false]
+  created_at : timestamptz
+}
+
+users ||--o| user_profiles : has (user_id UNIQUE)
+users ||--o{ watched_movies : logs
+users ||--o{ watchlist_items
+users ||--o{ liked_movies
+users ||--o{ collections : owns
+users ||--o{ reminders : sets
+users ||--o{ notifications : receives
+user_profiles ||--o{ user_favorite_genres
+collections ||--o{ collection_movies : contains
+watched_movies }o--|| movies
+watchlist_items }o--|| movies
+liked_movies }o--|| movies
+collection_movies }o--|| movies
+reminders }o--|| movies
+notifications }o--o| movies : optional, ON DELETE SET NULL
+movies ||--o{ movie_genres
+movie_genres }o--|| genres
+user_favorite_genres }o--|| genres
+@enduml

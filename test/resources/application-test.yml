@@ -1,0 +1,4 @@
+# Unit and @WebMvcTest tests need no database; this file only quiets logs.
+logging:
+  level:
+    root: WARN
