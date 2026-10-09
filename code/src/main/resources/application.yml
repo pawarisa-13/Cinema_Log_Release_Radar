@@ -74,6 +74,9 @@ management:
     web:
       exposure:
         include: health
+  health:
+    mail:
+      enabled: false              # email is optional; without an SMTP server the mail check would mark the app DOWN
 
 logging:
   level:

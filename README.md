@@ -1,4 +1,4 @@
-﻿# Poppy Night — Cinema Log & Release Radar
+# Poppy Night — Cinema Log & Release Radar
 
 เว็บแอปบันทึกการดูหนังในสไตล์สมุดวาดมือ ผู้ใช้ค้นหาหนัง (ข้อมูลจาก TMDB) บันทึกว่าดูเรื่องไหน ให้ดาวและเขียนรีวิว ดูไดอารี่เป็นปฏิทิน
 จัดเก็บ watchlist, หนังที่ชอบ และคอลเลกชันส่วนตัว และตั้งเตือนวันหนังเข้าฉายให้แจ้งเตือนในเว็บหรือทางอีเมล
@@ -33,32 +33,28 @@
 flowchart TD
     U["👤 ผู้ใช้ (Browser)"]
 
-    subgraph P["1. Presentation Layer — รับคำขอ / ส่งหน้าเว็บ"]
+    subgraph P["Presentation Layer"]
         WEB["controller.web<br/>ส่งหน้าเว็บ Thymeleaf"]
         API["controller.api<br/>REST API /api/v1/…"]
     end
 
-    subgraph B["2. Business Logic Layer — กฎของระบบ"]
-        SVC["service<br/>Diary, Watchlist, Reminder, …"]
-        NOTI["service.notification<br/>ส่งแจ้งเตือน"]
-        EXT["service.external.tmdb<br/>ดึงข้อมูลหนัง"]
+    subgraph B["Business Logic Layer"]
+        SVC["service / service.impl<br/>กฎของระบบ: Diary, Watchlist, Reminder, …<br/>+ notification (ส่งแจ้งเตือน)<br/>+ external.tmdb (ดึงข้อมูลหนัง)"]
     end
 
-    subgraph D["3. Data Access Layer — อ่าน/เขียนฐานข้อมูล"]
+    subgraph D["Data Access Layer"]
         REPO["repository<br/>Spring Data JPA"]
     end
 
-    DB[("PostgreSQL 17<br/>Supabase")]
+    DB[("PostgreSQL 17<br/>(Supabase)")]
     TMDB["☁️ TMDB API"]
 
-    U -->|"เปิดหน้า /films, /diary"| WEB
-    U -->|"JS เรียก fetch"| API
+    U -->|"เปิดหน้าเว็บ"| WEB
+    U -->|"JS เรียก API"| API
     WEB --> SVC
     API --> SVC
-    SVC --> NOTI
-    SVC --> EXT
-    EXT --> TMDB
     SVC --> REPO
+    SVC -.->|"ข้อมูลหนัง"| TMDB
     REPO --> DB
 ```
 
@@ -158,12 +154,29 @@ Reports: `code/target/reports/surefire.html` (tests), `code/target/site/jacoco/i
 
 ## Deployment URL
 
-เว็บที่ deploy จริง (Render + Supabase)
+เว็บที่ deploy จริง โฮสต์บน Render และใช้ฐานข้อมูล PostgreSQL บน Supabase (ทั้งสองอยู่ที่สิงคโปร์)
 
-- App: `https://<your-service>.onrender.com` ← fill in after deploying
-- Swagger: `https://<your-service>.onrender.com/swagger-ui.html`
+- เว็บ: https://poppy-night.onrender.com
+- Swagger UI: https://poppy-night.onrender.com/swagger-ui.html
+- Health check: https://poppy-night.onrender.com/actuator/health
 
-Render: New → Web Service → this repo → Docker (uses the root `Dockerfile`). Set `DB_URL` (Supabase → Connect → Session pooler, port 5432: `jdbc:postgresql://<host>.pooler.supabase.com:5432/postgres?sslmode=require`), `DB_USERNAME` (`postgres.<project-ref>`), `DB_PASSWORD`, `TMDB_API_KEY`. Add the Render deploy hook as the GitHub secret `RENDER_DEPLOY_HOOK` to deploy automatically after CI passes on `main`.
+> เว็บใช้ Render แบบฟรี ถ้าไม่มีคนเข้าประมาณ 15 นาที เซิร์ฟเวอร์จะหลับ การเปิดครั้งแรกหลังจากนั้นอาจรอประมาณ 1 นาที
+
+**วิธี deploy (สรุป)**
+1. Render → New → Web Service → เลือก repo นี้ → Language: Docker (ใช้ `Dockerfile` ที่อยู่นอกสุดของ repo) → Region: Singapore → Branch: `main`
+2. ตั้ง Environment Variables:
+
+| Key | ค่า |
+|---|---|
+| `DB_URL` | Supabase → Connect → Session pooler (JDBC) เช่น `jdbc:postgresql://<host>.pooler.supabase.com:5432/postgres?sslmode=require` |
+| `DB_USERNAME` | `postgres.<project-ref>` |
+| `DB_PASSWORD` | รหัสฐานข้อมูลของ Supabase |
+| `TMDB_API_KEY` | API key หรือ Read Access Token ของ TMDB |
+| `THYMELEAF_CACHE` | `true` |
+
+3. Health Check Path: `/actuator/health`
+4. Auto-Deploy: **After CI Checks Pass** เมื่อเมอร์จเข้า `main` และ GitHub Actions ผ่าน Render จะ deploy ใหม่ให้เอง
+5. ตอนแอปเปิดครั้งแรก Flyway จะสร้างตารางและข้อมูลตั้งต้นจาก migration V1–V8 ให้อัตโนมัติ
 
 ## Project Structure
 
