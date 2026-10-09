@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MovieDiscoveryServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cinema-log</a> &gt; <a href="index.source.html" class="el_package">com.cinemalog.service.impl</a> &gt; <span class="el_source">MovieDiscoveryServiceImpl.java</span></div><h1>MovieDiscoveryServiceImpl.java</h1><pre class="source lang-java linenums">package com.cinemalog.service.impl;
+
+import java.time.Clock;
+import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import com.cinemalog.domain.entity.Genre;
+import com.cinemalog.domain.entity.Movie;
+import com.cinemalog.dto.response.MovieSummaryResponse;
+import com.cinemalog.exception.ResourceNotFoundException;
+import com.cinemalog.mapper.MovieMapper;
+import com.cinemalog.repository.MovieRepository;
+import com.cinemalog.repository.UserRepository;
+import com.cinemalog.repository.WatchedMovieRepository;
+import com.cinemalog.service.MovieDiscoveryService;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional(readOnly = true)
+public class MovieDiscoveryServiceImpl implements MovieDiscoveryService {
+
+    static final int NOW_SHOWING_WINDOW_DAYS = 60;
+    static final double TOP_RATED_MIN = 7.5;
+
+    private final MovieRepository movieRepository;
+    private final UserRepository userRepository;
+    private final WatchedMovieRepository watchedMovieRepository;
+    private final MovieMapper movieMapper;
+    private final Clock clock;
+
+<span class="fc" id="L39">    public MovieDiscoveryServiceImpl(MovieRepository movieRepository, UserRepository userRepository,</span>
+            WatchedMovieRepository watchedMovieRepository, MovieMapper movieMapper, Clock clock) {
+<span class="fc" id="L41">        this.movieRepository = movieRepository;</span>
+<span class="fc" id="L42">        this.userRepository = userRepository;</span>
+<span class="fc" id="L43">        this.watchedMovieRepository = watchedMovieRepository;</span>
+<span class="fc" id="L44">        this.movieMapper = movieMapper;</span>
+<span class="fc" id="L45">        this.clock = clock;</span>
+<span class="fc" id="L46">    }</span>
+
+    @Override
+    public List&lt;MovieSummaryResponse&gt; nowShowing(int limit) {
+<span class="nc" id="L50">        LocalDate today = today();</span>
+<span class="nc" id="L51">        return movieMapper.toSummaries(movieRepository.findByReleaseDateBetweenOrderByPopularityDesc(</span>
+<span class="nc" id="L52">                today.minusDays(NOW_SHOWING_WINDOW_DAYS), today, PageRequest.of(0, limit)));</span>
+    }
+
+    @Override
+    public List&lt;MovieSummaryResponse&gt; upcoming(int limit) {
+<span class="nc" id="L57">        return movieMapper.toSummaries(movieRepository.findByReleaseDateAfterOrderByReleaseDateAscPopularityDesc(</span>
+<span class="nc" id="L58">                today(), PageRequest.of(0, limit)));</span>
+    }
+
+    @Override
+    public List&lt;MovieSummaryResponse&gt; topRated(int limit) {
+<span class="fc" id="L63">        return movieMapper.toSummaries(topRatedMovies(limit));</span>
+    }
+
+    @Override
+    public List&lt;MovieSummaryResponse&gt; recommendedFor(Optional&lt;Long&gt; userId, int limit) {
+<span class="fc bfc" id="L68" title="All 2 branches covered.">        if (userId.isEmpty()) {</span>
+<span class="fc" id="L69">            return topRated(limit);</span>
+        }
+<span class="fc" id="L71">        Set&lt;Integer&gt; favorites = userRepository.findById(userId.get())</span>
+<span class="fc" id="L72">                .map(u -&gt; u.getProfile().getFavoriteGenres().stream().map(Genre::getId).collect(Collectors.toSet()))</span>
+<span class="fc" id="L73">                .orElse(Set.of());</span>
+<span class="pc bpc" id="L74" title="1 of 2 branches missed.">        if (favorites.isEmpty()) {</span>
+<span class="nc" id="L75">            return topRated(limit);</span>
+        }
+<span class="fc" id="L77">        Set&lt;Long&gt; watched = watchedMovieRepository.findWatchedMovieIds(userId.get());</span>
+<span class="fc" id="L78">        List&lt;Movie&gt; picks = movieRepository.findReleasedWithAnyGenre(favorites, today(), PageRequest.of(0, limit * 4))</span>
+<span class="fc" id="L79">                .stream()</span>
+<span class="fc bfc" id="L80" title="All 2 branches covered.">                .filter(m -&gt; !watched.contains(m.getId()))</span>
+<span class="pc" id="L81">                .sorted(Comparator.comparingDouble((Movie m) -&gt; score(m, favorites, null)).reversed())</span>
+<span class="fc" id="L82">                .limit(limit)</span>
+<span class="fc" id="L83">                .toList();</span>
+<span class="fc" id="L84">        return movieMapper.toSummaries(picks);</span>
+    }
+
+    @Override
+    public List&lt;MovieSummaryResponse&gt; similarTo(Long movieId, int limit) {
+<span class="fc" id="L89">        Movie movie = movieRepository.findById(movieId)</span>
+<span class="pc" id="L90">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Movie &quot; + movieId + &quot; was not found.&quot;));</span>
+<span class="fc" id="L91">        Set&lt;Integer&gt; genres = movie.getGenres().stream().map(Genre::getId).collect(Collectors.toSet());</span>
+<span class="pc bpc" id="L92" title="1 of 2 branches missed.">        if (genres.isEmpty()) {</span>
+<span class="nc" id="L93">            return topRated(limit);</span>
+        }
+<span class="fc" id="L95">        List&lt;Movie&gt; picks = movieRepository.findReleasedWithAnyGenre(genres, today(), PageRequest.of(0, 60))</span>
+<span class="fc" id="L96">                .stream()</span>
+<span class="fc bfc" id="L97" title="All 2 branches covered.">                .filter(m -&gt; !m.getId().equals(movieId))</span>
+<span class="pc" id="L98">                .sorted(Comparator.comparingDouble((Movie m) -&gt; score(m, genres, movie.getDirector())).reversed())</span>
+<span class="fc" id="L99">                .limit(limit)</span>
+<span class="fc" id="L100">                .toList();</span>
+<span class="fc" id="L101">        return movieMapper.toSummaries(picks);</span>
+    }
+
+    static double score(Movie candidate, Set&lt;Integer&gt; genreIds, String director) {
+<span class="fc" id="L105">        long shared = candidate.getGenres().stream().filter(g -&gt; genreIds.contains(g.getId())).count();</span>
+<span class="pc bpc" id="L106" title="1 of 4 branches missed.">        double bonus = director != null &amp;&amp; Objects.equals(director, candidate.getDirector()) ? 2 : 0;</span>
+<span class="fc" id="L107">        return shared * 3 + candidate.getVoteAverage() / 10.0 + bonus;</span>
+    }
+
+    private List&lt;Movie&gt; topRatedMovies(int limit) {
+<span class="fc" id="L111">        return movieRepository</span>
+<span class="fc" id="L112">                .findByReleaseDateLessThanEqualAndVoteAverageGreaterThanEqualOrderByVoteAverageDescPopularityDesc(</span>
+<span class="fc" id="L113">                        today(), TOP_RATED_MIN, PageRequest.of(0, limit));</span>
+    }
+
+    private LocalDate today() {
+<span class="fc" id="L117">        return LocalDate.now(clock);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

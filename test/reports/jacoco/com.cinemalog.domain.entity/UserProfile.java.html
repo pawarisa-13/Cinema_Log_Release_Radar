@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserProfile.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cinema-log</a> &gt; <a href="index.source.html" class="el_package">com.cinemalog.domain.entity</a> &gt; <span class="el_source">UserProfile.java</span></div><h1>UserProfile.java</h1><pre class="source lang-java linenums">package com.cinemalog.domain.entity;
+
+import java.time.Instant;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+import com.cinemalog.domain.enums.AvatarColor;
+import com.cinemalog.domain.enums.AvatarStyle;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = &quot;user_profiles&quot;)
+public class UserProfile {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = &quot;user_id&quot;, nullable = false, unique = true)
+    private User user;
+
+    @Column(name = &quot;display_name&quot;, nullable = false, length = 60)
+    private String displayName;
+
+    @Column(length = 200)
+    private String bio;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;avatar_style&quot;, nullable = false, length = 20)
+<span class="pc" id="L45">    private AvatarStyle avatarStyle = AvatarStyle.BUN;</span>
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;avatar_color&quot;, nullable = false, length = 20)
+<span class="pc" id="L49">    private AvatarColor avatarColor = AvatarColor.PINK;</span>
+
+    @Column(name = &quot;updated_at&quot;, nullable = false)
+    private Instant updatedAt;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = &quot;user_favorite_genres&quot;,
+            joinColumns = @JoinColumn(name = &quot;profile_id&quot;),
+            inverseJoinColumns = @JoinColumn(name = &quot;genre_id&quot;))
+<span class="pc" id="L58">    private Set&lt;Genre&gt; favoriteGenres = new LinkedHashSet&lt;&gt;();</span>
+
+<span class="nc" id="L60">    protected UserProfile() {</span>
+<span class="nc" id="L61">    }</span>
+
+<span class="fc" id="L63">    public UserProfile(String displayName) {</span>
+<span class="fc" id="L64">        this.displayName = displayName;</span>
+<span class="fc" id="L65">        this.updatedAt = Instant.now();</span>
+<span class="fc" id="L66">    }</span>
+
+    public void update(String displayName, String bio, AvatarStyle style, AvatarColor color) {
+<span class="nc" id="L69">        this.displayName = displayName;</span>
+<span class="nc" id="L70">        this.bio = bio;</span>
+<span class="nc" id="L71">        this.avatarStyle = style;</span>
+<span class="nc" id="L72">        this.avatarColor = color;</span>
+<span class="nc" id="L73">        this.updatedAt = Instant.now();</span>
+<span class="nc" id="L74">    }</span>
+
+    public void replaceFavoriteGenres(Collection&lt;Genre&gt; genres) {
+<span class="fc" id="L77">        this.favoriteGenres.clear();</span>
+<span class="fc" id="L78">        this.favoriteGenres.addAll(genres);</span>
+<span class="fc" id="L79">        this.updatedAt = Instant.now();</span>
+<span class="fc" id="L80">    }</span>
+
+    void setUser(User user) {
+<span class="fc" id="L83">        this.user = user;</span>
+<span class="fc" id="L84">    }</span>
+
+    public Long getId() {
+<span class="nc" id="L87">        return id;</span>
+    }
+
+    public User getUser() {
+<span class="nc" id="L91">        return user;</span>
+    }
+
+    public String getDisplayName() {
+<span class="fc" id="L95">        return displayName;</span>
+    }
+
+    public String getBio() {
+<span class="nc" id="L99">        return bio;</span>
+    }
+
+    public AvatarStyle getAvatarStyle() {
+<span class="nc" id="L103">        return avatarStyle;</span>
+    }
+
+    public AvatarColor getAvatarColor() {
+<span class="nc" id="L107">        return avatarColor;</span>
+    }
+
+    public Set&lt;Genre&gt; getFavoriteGenres() {
+<span class="fc" id="L111">        return favoriteGenres;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LibraryPageController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cinema-log</a> &gt; <a href="index.source.html" class="el_package">com.cinemalog.controller.web</a> &gt; <span class="el_source">LibraryPageController.java</span></div><h1>LibraryPageController.java</h1><pre class="source lang-java linenums">package com.cinemalog.controller.web;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
+@Controller
+<span class="nc" id="L9">public class LibraryPageController {</span>
+
+    @GetMapping(&quot;/diary&quot;)
+    public String diary(Model model) {
+<span class="nc" id="L13">        model.addAttribute(&quot;nav&quot;, &quot;diary&quot;);</span>
+<span class="nc" id="L14">        return &quot;library/diary&quot;;</span>
+    }
+
+    @GetMapping(&quot;/watched&quot;)
+    public String watched(Model model) {
+<span class="nc" id="L19">        return list(&quot;watched&quot;, model);</span>
+    }
+
+    @GetMapping(&quot;/watchlist&quot;)
+    public String watchlist(Model model) {
+<span class="nc" id="L24">        return list(&quot;watchlist&quot;, model);</span>
+    }
+
+    @GetMapping(&quot;/liked&quot;)
+    public String liked(Model model) {
+<span class="nc" id="L29">        return list(&quot;liked&quot;, model);</span>
+    }
+
+    @GetMapping(&quot;/collections&quot;)
+    public String collections(Model model) {
+<span class="nc" id="L34">        model.addAttribute(&quot;nav&quot;, &quot;profile&quot;);</span>
+<span class="nc" id="L35">        return &quot;library/collections&quot;;</span>
+    }
+
+    @GetMapping(&quot;/collections/{id}&quot;)
+    public String collection(@PathVariable Long id, Model model) {
+<span class="nc" id="L40">        model.addAttribute(&quot;nav&quot;, &quot;profile&quot;);</span>
+<span class="nc" id="L41">        model.addAttribute(&quot;collectionId&quot;, id);</span>
+<span class="nc" id="L42">        return &quot;library/collection&quot;;</span>
+    }
+
+    private String list(String type, Model model) {
+<span class="nc" id="L46">        model.addAttribute(&quot;nav&quot;, &quot;profile&quot;);</span>
+<span class="nc" id="L47">        model.addAttribute(&quot;listType&quot;, type);</span>
+<span class="nc" id="L48">        return &quot;library/list&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

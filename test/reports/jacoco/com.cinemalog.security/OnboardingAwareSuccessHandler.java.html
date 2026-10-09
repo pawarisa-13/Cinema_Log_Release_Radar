@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OnboardingAwareSuccessHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cinema-log</a> &gt; <a href="index.source.html" class="el_package">com.cinemalog.security</a> &gt; <span class="el_source">OnboardingAwareSuccessHandler.java</span></div><h1>OnboardingAwareSuccessHandler.java</h1><pre class="source lang-java linenums">package com.cinemalog.security;
+
+import java.io.IOException;
+
+import com.cinemalog.service.UserProfileService;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.stereotype.Component;
+
+@Component
+public class OnboardingAwareSuccessHandler implements AuthenticationSuccessHandler {
+
+    private final UserProfileService userProfileService;
+
+<span class="nc" id="L19">    public OnboardingAwareSuccessHandler(UserProfileService userProfileService) {</span>
+<span class="nc" id="L20">        this.userProfileService = userProfileService;</span>
+<span class="nc" id="L21">    }</span>
+
+    @Override
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
+                                        Authentication authentication) throws IOException {
+<span class="nc" id="L26">        AppUserPrincipal principal = (AppUserPrincipal) authentication.getPrincipal();</span>
+<span class="nc bnc" id="L27" title="All 2 branches missed.">        String target = userProfileService.needsOnboarding(principal.getId()) ? &quot;/onboarding&quot; : &quot;/films&quot;;</span>
+<span class="nc" id="L28">        response.sendRedirect(request.getContextPath() + target);</span>
+<span class="nc" id="L29">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

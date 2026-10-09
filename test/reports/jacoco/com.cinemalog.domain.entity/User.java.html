@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>User.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cinema-log</a> &gt; <a href="index.source.html" class="el_package">com.cinemalog.domain.entity</a> &gt; <span class="el_source">User.java</span></div><h1>User.java</h1><pre class="source lang-java linenums">package com.cinemalog.domain.entity;
+
+import java.time.Instant;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = &quot;users&quot;)
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(name = &quot;password_hash&quot;, nullable = false, length = 100)
+    private String passwordHash;
+
+    @Column(name = &quot;created_at&quot;, nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @OneToOne(mappedBy = &quot;user&quot;, cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private UserProfile profile;
+
+<span class="nc" id="L35">    protected User() {</span>
+<span class="nc" id="L36">    }</span>
+
+<span class="fc" id="L38">    public User(String email, String passwordHash) {</span>
+<span class="fc" id="L39">        this.email = email;</span>
+<span class="fc" id="L40">        this.passwordHash = passwordHash;</span>
+<span class="fc" id="L41">        this.createdAt = Instant.now();</span>
+<span class="fc" id="L42">    }</span>
+
+    public void attachProfile(UserProfile profile) {
+<span class="fc" id="L45">        this.profile = profile;</span>
+<span class="fc" id="L46">        profile.setUser(this);</span>
+<span class="fc" id="L47">    }</span>
+
+    public void changeEmail(String email) {
+<span class="nc" id="L50">        this.email = email;</span>
+<span class="nc" id="L51">    }</span>
+
+    public Long getId() {
+<span class="nc" id="L54">        return id;</span>
+    }
+
+    public String getEmail() {
+<span class="fc" id="L58">        return email;</span>
+    }
+
+    public String getPasswordHash() {
+<span class="fc" id="L62">        return passwordHash;</span>
+    }
+
+    public Instant getCreatedAt() {
+<span class="nc" id="L66">        return createdAt;</span>
+    }
+
+    public UserProfile getProfile() {
+<span class="fc" id="L70">        return profile;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

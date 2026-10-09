@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CollectionServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cinema-log</a> &gt; <a href="index.source.html" class="el_package">com.cinemalog.service.impl</a> &gt; <span class="el_source">CollectionServiceImpl.java</span></div><h1>CollectionServiceImpl.java</h1><pre class="source lang-java linenums">package com.cinemalog.service.impl;
+
+import java.util.List;
+
+import com.cinemalog.domain.entity.Movie;
+import com.cinemalog.domain.entity.MovieCollection;
+import com.cinemalog.dto.request.CollectionRequest;
+import com.cinemalog.dto.response.CollectionDetailResponse;
+import com.cinemalog.dto.response.CollectionSummaryResponse;
+import com.cinemalog.exception.DuplicateResourceException;
+import com.cinemalog.exception.ResourceNotFoundException;
+import com.cinemalog.mapper.CollectionMapper;
+import com.cinemalog.repository.MovieCollectionRepository;
+import com.cinemalog.repository.MovieRepository;
+import com.cinemalog.repository.UserRepository;
+import com.cinemalog.service.CollectionService;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional(readOnly = true)
+public class CollectionServiceImpl implements CollectionService {
+
+    private final MovieCollectionRepository collectionRepository;
+    private final MovieRepository movieRepository;
+    private final UserRepository userRepository;
+    private final CollectionMapper collectionMapper;
+
+<span class="fc" id="L30">    public CollectionServiceImpl(MovieCollectionRepository collectionRepository, MovieRepository movieRepository,</span>
+                                 UserRepository userRepository, CollectionMapper collectionMapper) {
+<span class="fc" id="L32">        this.collectionRepository = collectionRepository;</span>
+<span class="fc" id="L33">        this.movieRepository = movieRepository;</span>
+<span class="fc" id="L34">        this.userRepository = userRepository;</span>
+<span class="fc" id="L35">        this.collectionMapper = collectionMapper;</span>
+<span class="fc" id="L36">    }</span>
+
+    @Override
+    public List&lt;CollectionSummaryResponse&gt; list(Long userId) {
+<span class="nc" id="L40">        return collectionRepository.findByUserIdOrderByCreatedAtAscIdAsc(userId).stream()</span>
+<span class="nc" id="L41">                .map(collectionMapper::toSummary).toList();</span>
+    }
+
+    @Override
+    public CollectionDetailResponse get(Long userId, Long collectionId) {
+<span class="nc" id="L46">        return collectionMapper.toDetail(load(userId, collectionId));</span>
+    }
+
+    @Override
+    @Transactional
+    public CollectionDetailResponse create(Long userId, CollectionRequest request) {
+<span class="fc" id="L52">        String name = request.name().trim();</span>
+<span class="pc bpc" id="L53" title="1 of 2 branches missed.">        if (collectionRepository.existsByUserIdAndNameIgnoreCase(userId, name)) {</span>
+<span class="fc" id="L54">            throw new DuplicateResourceException(&quot;You already have a collection called \&quot;&quot; + name + &quot;\&quot;.&quot;);</span>
+        }
+<span class="nc" id="L56">        MovieCollection saved = collectionRepository.save(</span>
+<span class="nc" id="L57">                new MovieCollection(userRepository.getReferenceById(userId), name, request.description()));</span>
+<span class="nc" id="L58">        return collectionMapper.toDetail(saved);</span>
+    }
+
+    @Override
+    @Transactional
+    public CollectionDetailResponse update(Long userId, Long collectionId, CollectionRequest request) {
+<span class="nc" id="L64">        MovieCollection collection = load(userId, collectionId);</span>
+<span class="nc" id="L65">        String name = request.name().trim();</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">        if (collectionRepository.existsByUserIdAndNameIgnoreCaseAndIdNot(userId, name, collectionId)) {</span>
+<span class="nc" id="L67">            throw new DuplicateResourceException(&quot;You already have a collection called \&quot;&quot; + name + &quot;\&quot;.&quot;);</span>
+        }
+<span class="nc" id="L69">        collection.rename(name, request.description());</span>
+<span class="nc" id="L70">        return collectionMapper.toDetail(collection);</span>
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long userId, Long collectionId) {
+<span class="nc" id="L76">        collectionRepository.delete(load(userId, collectionId));</span>
+<span class="nc" id="L77">    }</span>
+
+    @Override
+    @Transactional
+    public CollectionDetailResponse addMovie(Long userId, Long collectionId, Long movieId) {
+<span class="fc" id="L82">        MovieCollection collection = load(userId, collectionId);</span>
+<span class="pc" id="L83">        Movie movie = movieRepository.findById(movieId)</span>
+<span class="pc" id="L84">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Movie &quot; + movieId + &quot; was not found.&quot;));</span>
+<span class="nc" id="L85">        collection.addMovie(movie);</span>
+<span class="nc" id="L86">        return collectionMapper.toDetail(collection);</span>
+    }
+
+    @Override
+    @Transactional
+    public CollectionDetailResponse removeMovie(Long userId, Long collectionId, Long movieId) {
+<span class="fc" id="L92">        MovieCollection collection = load(userId, collectionId);</span>
+<span class="pc bpc" id="L93" title="1 of 2 branches missed.">        if (!collection.removeMovie(movieId)) {</span>
+<span class="fc" id="L94">            throw new ResourceNotFoundException(&quot;That movie is not in \&quot;&quot; + collection.getName() + &quot;\&quot;.&quot;);</span>
+        }
+<span class="nc" id="L96">        return collectionMapper.toDetail(collection);</span>
+    }
+
+    private MovieCollection load(Long userId, Long collectionId) {
+<span class="fc" id="L100">        return collectionRepository.findByIdAndUserId(collectionId, userId)</span>
+<span class="fc" id="L101">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Collection &quot; + collectionId + &quot; was not found.&quot;));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

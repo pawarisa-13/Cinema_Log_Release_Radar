@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CollectionMapper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cinema-log</a> &gt; <a href="index.source.html" class="el_package">com.cinemalog.mapper</a> &gt; <span class="el_source">CollectionMapper.java</span></div><h1>CollectionMapper.java</h1><pre class="source lang-java linenums">package com.cinemalog.mapper;
+
+import java.util.List;
+
+import com.cinemalog.domain.entity.CollectionMovie;
+import com.cinemalog.domain.entity.Movie;
+import com.cinemalog.domain.entity.MovieCollection;
+import com.cinemalog.dto.response.CollectionDetailResponse;
+import com.cinemalog.dto.response.CollectionSummaryResponse;
+
+import org.springframework.stereotype.Component;
+
+@Component
+public class CollectionMapper {
+
+    private static final int PREVIEW_SIZE = 3;
+
+    private final MovieMapper movieMapper;
+
+<span class="nc" id="L20">    public CollectionMapper(MovieMapper movieMapper) {</span>
+<span class="nc" id="L21">        this.movieMapper = movieMapper;</span>
+<span class="nc" id="L22">    }</span>
+
+    public CollectionSummaryResponse toSummary(MovieCollection c) {
+<span class="nc" id="L25">        List&lt;Movie&gt; movies = movies(c);</span>
+<span class="nc" id="L26">        return new CollectionSummaryResponse(c.getId(), c.getName(), c.getDescription(), movies.size(),</span>
+<span class="nc" id="L27">                movieMapper.toSummaries(movies.stream().limit(PREVIEW_SIZE).toList()),</span>
+<span class="nc" id="L28">                movies.stream().map(Movie::getId).toList(), c.getCreatedAt());</span>
+    }
+
+    public CollectionDetailResponse toDetail(MovieCollection c) {
+<span class="nc" id="L32">        return new CollectionDetailResponse(c.getId(), c.getName(), c.getDescription(),</span>
+<span class="nc" id="L33">                movieMapper.toSummaries(movies(c)), c.getCreatedAt());</span>
+    }
+
+    private static List&lt;Movie&gt; movies(MovieCollection c) {
+<span class="nc" id="L37">        return c.getItems().stream().map(CollectionMovie::getMovie).toList();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

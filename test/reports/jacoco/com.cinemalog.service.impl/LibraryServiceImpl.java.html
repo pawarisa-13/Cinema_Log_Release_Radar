@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LibraryServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cinema-log</a> &gt; <a href="index.source.html" class="el_package">com.cinemalog.service.impl</a> &gt; <span class="el_source">LibraryServiceImpl.java</span></div><h1>LibraryServiceImpl.java</h1><pre class="source lang-java linenums">package com.cinemalog.service.impl;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.cinemalog.domain.entity.WatchedMovie;
+import com.cinemalog.domain.enums.WatchPlace;
+import com.cinemalog.dto.response.LibraryStateResponse;
+import com.cinemalog.dto.response.StatsResponse;
+import com.cinemalog.repository.LikedMovieRepository;
+import com.cinemalog.repository.MovieCollectionRepository;
+import com.cinemalog.repository.WatchedMovieRepository;
+import com.cinemalog.repository.WatchlistItemRepository;
+import com.cinemalog.service.LibraryService;
+import com.cinemalog.service.NotificationService;
+import com.cinemalog.service.ReminderService;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional(readOnly = true)
+public class LibraryServiceImpl implements LibraryService {
+
+    private static final int TOP_GENRES = 6;
+
+    private final WatchedMovieRepository watchedMovieRepository;
+    private final WatchlistItemRepository watchlistRepository;
+    private final LikedMovieRepository likedMovieRepository;
+    private final MovieCollectionRepository collectionRepository;
+    private final ReminderService reminderService;
+    private final NotificationService notificationService;
+
+<span class="fc" id="L36">    public LibraryServiceImpl(WatchedMovieRepository watchedMovieRepository, WatchlistItemRepository watchlistRepository,</span>
+                              LikedMovieRepository likedMovieRepository, MovieCollectionRepository collectionRepository,
+                              ReminderService reminderService, NotificationService notificationService) {
+<span class="fc" id="L39">        this.watchedMovieRepository = watchedMovieRepository;</span>
+<span class="fc" id="L40">        this.watchlistRepository = watchlistRepository;</span>
+<span class="fc" id="L41">        this.likedMovieRepository = likedMovieRepository;</span>
+<span class="fc" id="L42">        this.collectionRepository = collectionRepository;</span>
+<span class="fc" id="L43">        this.reminderService = reminderService;</span>
+<span class="fc" id="L44">        this.notificationService = notificationService;</span>
+<span class="fc" id="L45">    }</span>
+
+    @Override
+    public LibraryStateResponse state(Long userId) {
+
+<span class="fc" id="L50">        Map&lt;Long, WatchedMovie&gt; latest = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L51">        watchedMovieRepository.findByUserIdOrderByWatchedDateAscIdAsc(userId)</span>
+<span class="fc" id="L52">                .forEach(w -&gt; latest.put(w.getMovie().getId(), w));</span>
+<span class="fc" id="L53">        List&lt;LibraryStateResponse.WatchedMarker&gt; watched = latest.values().stream()</span>
+<span class="fc" id="L54">                .map(w -&gt; new LibraryStateResponse.WatchedMarker(w.getMovie().getId(), w.getId(), w.getWatchedDate(),</span>
+<span class="fc" id="L55">                        w.getRating(), w.hasReview()))</span>
+<span class="fc" id="L56">                .toList();</span>
+<span class="fc" id="L57">        List&lt;LibraryStateResponse.ReminderMarker&gt; reminders = reminderService.listActive(userId).stream()</span>
+<span class="pc" id="L58">                .map(r -&gt; new LibraryStateResponse.ReminderMarker(r.movie().id(), r.offsetDays(), r.channel(), r.status()))</span>
+<span class="fc" id="L59">                .toList();</span>
+<span class="fc" id="L60">        return new LibraryStateResponse(likedMovieRepository.findMovieIds(userId), watchlistRepository.findMovieIds(userId),</span>
+<span class="fc" id="L61">                watched, reminders, notificationService.unreadCount(userId));</span>
+    }
+
+    @Override
+    public StatsResponse stats(Long userId) {
+<span class="nc" id="L66">        List&lt;StatsResponse.GenreCount&gt; genres = watchedMovieRepository.countGenres(userId, PageRequest.of(0, TOP_GENRES))</span>
+<span class="nc" id="L67">                .stream().map(g -&gt; new StatsResponse.GenreCount(g.getName(), g.getTotal())).toList();</span>
+<span class="nc" id="L68">        Double avg = watchedMovieRepository.averageRating(userId);</span>
+<span class="nc" id="L69">        return new StatsResponse(</span>
+<span class="nc" id="L70">                watchedMovieRepository.countDistinctMovies(userId),</span>
+<span class="nc" id="L71">                watchedMovieRepository.countByUserId(userId),</span>
+<span class="nc" id="L72">                watchedMovieRepository.countByUserIdAndReviewIsNotNull(userId),</span>
+<span class="nc" id="L73">                watchlistRepository.countByUserId(userId),</span>
+<span class="nc" id="L74">                collectionRepository.countByUserId(userId),</span>
+<span class="nc" id="L75">                likedMovieRepository.countByUserId(userId),</span>
+<span class="nc" id="L76">                watchedMovieRepository.countByUserIdAndPlace(userId, WatchPlace.CINEMA),</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">                avg == null ? 0 : Math.round(avg * 10) / 10.0,</span>
+<span class="nc" id="L78">                genres);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

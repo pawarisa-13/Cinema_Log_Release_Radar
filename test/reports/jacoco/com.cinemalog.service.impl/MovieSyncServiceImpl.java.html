@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MovieSyncServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">cinema-log</a> &gt; <a href="index.source.html" class="el_package">com.cinemalog.service.impl</a> &gt; <span class="el_source">MovieSyncServiceImpl.java</span></div><h1>MovieSyncServiceImpl.java</h1><pre class="source lang-java linenums">package com.cinemalog.service.impl;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+
+import com.cinemalog.config.TmdbProperties;
+import com.cinemalog.domain.entity.Genre;
+import com.cinemalog.domain.entity.Movie;
+import com.cinemalog.domain.enums.MovieListType;
+import com.cinemalog.domain.model.ExternalMovie;
+import com.cinemalog.exception.ExternalServiceException;
+import com.cinemalog.repository.GenreRepository;
+import com.cinemalog.repository.MovieRepository;
+import com.cinemalog.service.MovieSyncService;
+import com.cinemalog.service.external.MovieCatalogSource;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+public class MovieSyncServiceImpl implements MovieSyncService {
+
+    private static final int MAX_SEARCH_IMPORT = 20;
+
+    private final MovieCatalogSource catalogSource;
+    private final MovieRepository movieRepository;
+    private final GenreRepository genreRepository;
+    private final TmdbProperties properties;
+    private final Clock clock;
+
+<span class="nc" id="L33">    public MovieSyncServiceImpl(MovieCatalogSource catalogSource, MovieRepository movieRepository,</span>
+            GenreRepository genreRepository, TmdbProperties properties, Clock clock) {
+<span class="nc" id="L35">        this.catalogSource = catalogSource;</span>
+<span class="nc" id="L36">        this.movieRepository = movieRepository;</span>
+<span class="nc" id="L37">        this.genreRepository = genreRepository;</span>
+<span class="nc" id="L38">        this.properties = properties;</span>
+<span class="nc" id="L39">        this.clock = clock;</span>
+<span class="nc" id="L40">    }</span>
+
+    @Override
+    @Transactional(noRollbackFor = ExternalServiceException.class)
+    public void syncGenres() {
+<span class="nc bnc" id="L45" title="All 2 branches missed.">        if (!catalogSource.isAvailable()) {</span>
+<span class="nc" id="L46">            return;</span>
+        }
+<span class="nc" id="L48">        Map&lt;Integer, String&gt; remote = catalogSource.fetchGenres();</span>
+<span class="nc" id="L49">        remote.forEach((id, name) -&gt; {</span>
+
+<span class="nc bnc" id="L51" title="All 2 branches missed.">            if (!genreRepository.existsById(id)) {</span>
+<span class="nc" id="L52">                genreRepository.save(new Genre(id, name));</span>
+            }
+<span class="nc" id="L54">        });</span>
+<span class="nc" id="L55">    }</span>
+
+    @Override
+    @Transactional(noRollbackFor = ExternalServiceException.class)
+    public int syncCatalog() {
+<span class="nc bnc" id="L60" title="All 2 branches missed.">        if (!catalogSource.isAvailable()) {</span>
+<span class="nc" id="L61">            return 0;</span>
+        }
+<span class="nc bnc" id="L63" title="All 2 branches missed.">        int pages = properties.syncPages() == null ? 1 : Math.max(1, properties.syncPages());</span>
+<span class="nc" id="L64">        int count = 0;</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">        for (MovieListType type : MovieListType.values()) {</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">            for (int page = 1; page &lt;= pages; page++) {</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">                for (ExternalMovie m : catalogSource.fetchList(type, page)) {</span>
+<span class="nc" id="L68">                    upsert(m);</span>
+<span class="nc" id="L69">                    count++;</span>
+                }
+            }
+        }
+<span class="nc" id="L73">        return count;</span>
+    }
+
+    @Override
+    @Transactional(noRollbackFor = ExternalServiceException.class)
+    public int importSearchResults(String query) {
+<span class="nc bnc" id="L79" title="All 6 branches missed.">        if (!catalogSource.isAvailable() || query == null || query.isBlank()) {</span>
+<span class="nc" id="L80">            return 0;</span>
+        }
+<span class="nc" id="L82">        List&lt;ExternalMovie&gt; found = catalogSource.search(query.trim()).stream().limit(MAX_SEARCH_IMPORT).toList();</span>
+<span class="nc" id="L83">        found.forEach(this::upsert);</span>
+<span class="nc" id="L84">        return found.size();</span>
+    }
+
+    @Override
+    @Transactional(noRollbackFor = ExternalServiceException.class)
+    public void refreshDetails(Movie movie) {
+<span class="nc bnc" id="L90" title="All 2 branches missed.">        if (!catalogSource.isAvailable()) {</span>
+<span class="nc" id="L91">            return;</span>
+        }
+<span class="nc" id="L93">        catalogSource.fetchDetails(movie.getTmdbId())</span>
+<span class="nc" id="L94">                .ifPresent(e -&gt; movie.applyDetails(e, genreRepository.findAllById(e.genreIds()), Instant.now(clock)));</span>
+<span class="nc" id="L95">    }</span>
+
+    Movie upsert(ExternalMovie e) {
+<span class="nc" id="L98">        Movie movie = movieRepository.findByTmdbId(e.tmdbId()).orElseGet(() -&gt; new Movie(e.tmdbId(), e.title()));</span>
+<span class="nc" id="L99">        movie.applySummary(e, genreRepository.findAllById(e.genreIds()));</span>
+<span class="nc" id="L100">        return movieRepository.save(movie);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
