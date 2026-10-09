@@ -1,23 +1,23 @@
-"""Builds 01-use-case.md (tables) and src/01-use-case-doc.html (A4 print source for 01-use-case.pdf).
-Run from doc/diagrams:  python3 src/01_use_case_doc.py"""
+"""สร้าง 01-use-case.md (ตาราง) และ src/01-use-case-doc.html (ไฟล์ต้นฉบับ A4 สำหรับพิมพ์เป็น 01-use-case.pdf)
+รันจาก doc/diagrams:  python3 src/01_use_case_doc.py"""
 import os, re, sys, html
 sys.path.insert(0, os.path.dirname(__file__))
 from use_cases import UC
 
 ACTORS = [
- ("Visitor", "Not logged in. Can only reach `/login`, `/register` and the public API (`SecurityConfig`)."),
- ("Member", "A logged-in Visitor (generalization). Every page and `/api/v1/users/me/**` needs a session."),
- ("Scheduler", "Spring `@Scheduled` jobs `MovieSyncJob` and `ReminderJob`. Each also runs once on `ApplicationReadyEvent`."),
- ("TMDB API, SMTP server", "External systems. Email is optional (`spring.mail.host` may be empty)."),
+ ("Visitor", "ผู้ที่ยังไม่ได้ล็อกอิน เข้าได้เฉพาะ `/login`, `/register` และ public API (`SecurityConfig`)"),
+ ("Member", "Visitor ที่ล็อกอินแล้ว (generalization) ทุกหน้าและ `/api/v1/users/me/**` ต้องมี session"),
+ ("Scheduler", "งาน Spring `@Scheduled` คือ `MovieSyncJob` และ `ReminderJob` แต่ละงานจะรันหนึ่งครั้งตอน `ApplicationReadyEvent` ด้วย"),
+ ("TMDB API, SMTP server", "ระบบภายนอก การส่งอีเมลเป็นตัวเลือกเสริม (`spring.mail.host` ปล่อยว่างได้)"),
 ]
 REL = [
- ("UC01 «include» UC02", "After a successful register the page always submits the hidden login form", "`templates/auth/register.html` (`#auto-login`), `pages/auth.js`"),
- ("UC04 «extend» UC02", "Only when the profile has no favorite genres", "`OnboardingAwareSuccessHandler` → `UserProfileService.needsOnboarding()`"),
- ("UC07 «extend» UC06", "Only for a text query of 2+ characters, on page 0, with a TMDB key", "`MovieQueryServiceImpl.search()` → `MovieSyncService.importSearchResults()`"),
- ("UC08 «include» UC10", "The movie page always loads its reviews", "`pages/movie.js` → `GET /api/v1/movies/{id}/reviews`"),
- ("UC09 «extend» UC08", "Only when details are missing or stale and a key is set", "`MovieQueryServiceImpl.getDetail()` → `Movie.needsDetails()` → `refreshDetails()`"),
- ("UC23 «include» UC24", "Every due reminder is delivered", "`ReminderDispatchServiceImpl.dispatchDueReminders()`"),
- ("UC24 «extend» UC18", "Only when the reminder date has already been reached", "`ReminderServiceImpl.save()` → `dispatchIfDue()`"),
+ ("UC01 «include» UC02", "หลังสมัครสมาชิกสำเร็จ หน้าเว็บจะส่งฟอร์มล็อกอินที่ซ่อนไว้ทุกครั้ง", "`templates/auth/register.html` (`#auto-login`), `pages/auth.js`"),
+ ("UC04 «extend» UC02", "เฉพาะเมื่อโปรไฟล์ยังไม่มีแนวหนังที่ชอบ", "`OnboardingAwareSuccessHandler` → `UserProfileService.needsOnboarding()`"),
+ ("UC07 «extend» UC06", "เฉพาะการค้นหาด้วยข้อความยาว 2 ตัวอักษรขึ้นไป ที่หน้า 0 และมี TMDB key", "`MovieQueryServiceImpl.search()` → `MovieSyncService.importSearchResults()`"),
+ ("UC08 «include» UC10", "หน้าหนังจะโหลดรีวิวของหนังเรื่องนั้นทุกครั้ง", "`pages/movie.js` → `GET /api/v1/movies/{id}/reviews`"),
+ ("UC09 «extend» UC08", "เฉพาะเมื่อรายละเอียดยังไม่มีหรือเก่าเกินไป และตั้งค่า key แล้ว", "`MovieQueryServiceImpl.getDetail()` → `Movie.needsDetails()` → `refreshDetails()`"),
+ ("UC23 «include» UC24", "การเตือนทุกรายการที่ถึงกำหนดจะถูกส่ง", "`ReminderDispatchServiceImpl.dispatchDueReminders()`"),
+ ("UC24 «extend» UC18", "เฉพาะเมื่อถึงวันเตือนแล้ว", "`ReminderServiceImpl.save()` → `dispatchIfDue()`"),
 ]
 
 def md_cell(t): return t.replace("|", "\\|")
@@ -26,21 +26,21 @@ def lst_md(items, numbered):
     return "<br>".join((f"{i+1}. " if numbered else "• ") + md_cell(x) for i, x in enumerate(items))
 
 # ---------- Markdown ----------
-md = ["# Use case diagram + use case descriptions", "",
-      "UML use case diagram (PlantUML). Source: [`01-use-case.puml`](01-use-case.puml) · rendered: [`01-use-case.svg`](01-use-case.svg) · "
-      "printable A4 document (diagram + description tables): [`01-use-case.pdf`](01-use-case.pdf)", "",
-      "![Use case diagram](01-use-case.svg)", "", "## Actors", ""]
+md = ["# Use case diagram และคำอธิบาย Use Case", "",
+      "UML use case diagram (PlantUML) ไฟล์ต้นฉบับ: [`01-use-case.puml`](01-use-case.puml) · ภาพที่ render แล้ว: [`01-use-case.svg`](01-use-case.svg) · "
+      "เอกสาร A4 สำหรับพิมพ์ (แผนภาพ + ตารางคำอธิบาย): [`01-use-case.pdf`](01-use-case.pdf)", "",
+      "![Use case diagram](01-use-case.svg)", "", "## Actor", ""]
 md += [f"- **{a}**: {d}" for a, d in ACTORS]
-md += ["", "## «include» / «extend» used in the diagram", "", "| Relation | Why | Code |", "|---|---|---|"]
+md += ["", "## ความสัมพันธ์ «include» / «extend» ที่ใช้ในแผนภาพ", "", "| ความสัมพันธ์ (Relation) | เหตุผล | โค้ดที่เกี่ยวข้อง |", "|---|---|---|"]
 md += [f"| {a} | {b} | {c} |" for a, b, c in REL]
-md += ["", "## Use case descriptions", ""]
+md += ["", "## คำอธิบาย Use Case", ""]
 for u in UC:
-    md += [f"### {u['id']} — {u['name']}", "", "| Field | Detail |", "|---|---|",
-           f"| Use Case ID | {u['id']} |", f"| Use Case Name | {md_cell(u['name'])} |", f"| Primary Actor | {md_cell(u['actor'])} |",
-           f"| Description | {md_cell(u['desc'])} |", f"| Pre-conditions | {lst_md(u['pre'], False)} |",
-           f"| Post-conditions | {lst_md(u['post'], False)} |", f"| Main Flow | {lst_md(u['main'], True)} |",
-           f"| Alternative Flow | {lst_md(u['alt'], False)} |", ""]
-open("01-use-case.md", "w").write("\n".join(md))
+    md += [f"### {u['id']} — {u['name']}", "", "| หัวข้อ | รายละเอียด |", "|---|---|",
+           f"| รหัส (Use Case ID) | {u['id']} |", f"| ชื่อ Use Case | {md_cell(u['name'])} |", f"| Actor หลัก | {md_cell(u['actor'])} |",
+           f"| คำอธิบาย | {md_cell(u['desc'])} |", f"| เงื่อนไขก่อนเริ่ม (Pre-conditions) | {lst_md(u['pre'], False)} |",
+           f"| ผลลัพธ์หลังจบ (Post-conditions) | {lst_md(u['post'], False)} |", f"| ขั้นตอนหลัก (Main Flow) | {lst_md(u['main'], True)} |",
+           f"| ขั้นตอนทางเลือก (Alternative Flow) | {lst_md(u['alt'], False)} |", ""]
+open("01-use-case.md", "w", encoding="utf-8").write("\n".join(md))
 
 # ---------- HTML for A4 PDF ----------
 def inline(t):
@@ -54,19 +54,19 @@ svg = '<img src="../01-use-case.svg" alt="Use case diagram">'
 rows = []
 for u in UC:
     rows.append(f"""<table class="uc">
-<tr><th>Use Case ID</th><td><b>{u['id']}</b></td></tr>
-<tr><th>Use Case Name</th><td>{inline(u['name'])}</td></tr>
-<tr><th>Primary Actor</th><td>{inline(u['actor'])}</td></tr>
-<tr><th>Description</th><td>{inline(u['desc'])}</td></tr>
-<tr><th>Pre-conditions</th><td>{lst_html(u['pre'], False)}</td></tr>
-<tr><th>Post-conditions</th><td>{lst_html(u['post'], False)}</td></tr>
-<tr><th>Main Flow</th><td>{lst_html(u['main'], True)}</td></tr>
-<tr><th>Alternative Flow</th><td>{lst_html(u['alt'], False)}</td></tr>
+<tr><th>รหัส <span class="nw">(Use Case ID)</span></th><td><b>{u['id']}</b></td></tr>
+<tr><th>ชื่อ Use Case</th><td>{inline(u['name'])}</td></tr>
+<tr><th>Actor หลัก</th><td>{inline(u['actor'])}</td></tr>
+<tr><th>คำอธิบาย</th><td>{inline(u['desc'])}</td></tr>
+<tr><th>เงื่อนไขก่อนเริ่ม <span class="nw">(Pre-conditions)</span></th><td>{lst_html(u['pre'], False)}</td></tr>
+<tr><th>ผลลัพธ์หลังจบ <span class="nw">(Post-conditions)</span></th><td>{lst_html(u['post'], False)}</td></tr>
+<tr><th>ขั้นตอนหลัก <span class="nw">(Main Flow)</span></th><td>{lst_html(u['main'], True)}</td></tr>
+<tr><th>ขั้นตอนทางเลือก <span class="nw">(Alternative Flow)</span></th><td>{lst_html(u['alt'], False)}</td></tr>
 </table>""")
-doc = f"""<!doctype html><html><head><meta charset="utf-8"><title>Use Case Diagram and Descriptions</title>
+doc = f"""<!doctype html><html lang="th"><head><meta charset="utf-8"><title>Use Case Diagram และคำอธิบาย Use Case</title>
 <style>
 @page {{ size: A4; margin: 16mm 15mm 16mm 15mm; }}
-body {{ font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #000; }}
+body {{ font-family: "Sarabun", "TH Sarabun New", "Tahoma", sans-serif; font-size: 10.5pt; line-height: 1.35; color: #000; }}
 h1 {{ font-size: 16pt; margin: 0 0 2mm; }} h2 {{ font-size: 12.5pt; margin: 6mm 0 2mm; border-bottom: 1px solid #000; padding-bottom: 1mm; }}
 p.sub {{ margin: 0 0 4mm; font-size: 9.5pt; }}
 .fig {{ text-align: center; }} .fig img {{ max-width: 100%; max-height: 222mm; }}
@@ -74,25 +74,27 @@ p.sub {{ margin: 0 0 4mm; font-size: 9.5pt; }}
 table {{ border-collapse: collapse; width: 100%; }}
 th, td {{ border: 1px solid #000; padding: 1.4mm 2mm; vertical-align: top; text-align: left; }}
 table.uc {{ margin: 0 0 5mm; page-break-inside: avoid; }}
-table.uc th {{ width: 32mm; font-weight: bold; background: #fff; }}
+table.uc th {{ width: 40mm; font-weight: bold; background: #fff; }}
 table.rel th {{ background: #fff; }}
 ul, ol {{ margin: 0; padding-left: 5mm; }} li {{ margin: 0.3mm 0; }}
+td.code {{ overflow-wrap: anywhere; }}
 code {{ font-family: "Courier New", monospace; font-size: 8.8pt; }}
 .pb {{ page-break-before: always; }}
+.nw {{ white-space: nowrap; }}
 </style></head><body>
 <h1>Cinema Log &amp; Release Radar — Use Case Model</h1>
-<p class="sub">CP353002 · Section 03 · source: <code>doc/diagrams/01-use-case.puml</code></p>
-<h2>1. Use Case Diagram</h2>
+<p class="sub">CP353002 · Section 03 · ไฟล์ต้นฉบับ: <code>doc/diagrams/01-use-case.puml</code></p>
+<h2>1. แผนภาพ Use Case (Use Case Diagram)</h2>
 <div class="fig">{svg}</div>
-<div class="cap">Figure 1 — Use case diagram</div>
-<h2 class="pb">2. Actors</h2>
-<table class="rel"><tr><th style="width:42mm">Actor</th><th>Description</th></tr>
+<div class="cap">รูปที่ 1 — Use case diagram</div>
+<h2 class="pb">2. Actor</h2>
+<table class="rel"><tr><th style="width:42mm">Actor</th><th>คำอธิบาย</th></tr>
 {''.join(f'<tr><td><b>{inline(a)}</b></td><td>{inline(d)}</td></tr>' for a, d in ACTORS)}</table>
-<h2>3. «include» / «extend» relationships</h2>
-<table class="rel"><tr><th style="width:38mm">Relation</th><th>Why</th><th>Code</th></tr>
-{''.join(f'<tr><td>{inline(a)}</td><td>{inline(b)}</td><td>{inline(c)}</td></tr>' for a, b, c in REL)}</table>
-<h2>4. Use Case Descriptions</h2>
+<h2>3. ความสัมพันธ์ «include» / «extend»</h2>
+<table class="rel"><tr><th style="width:38mm">ความสัมพันธ์ (Relation)</th><th style="width:62mm">เหตุผล</th><th>โค้ดที่เกี่ยวข้อง</th></tr>
+{''.join(f'<tr><td>{inline(a)}</td><td>{inline(b)}</td><td class="code">{inline(c)}</td></tr>' for a, b, c in REL)}</table>
+<h2>4. คำอธิบาย Use Case</h2>
 {''.join(rows)}
 </body></html>"""
-open(os.path.join("src", "01-use-case-doc.html"), "w").write(doc)
+open(os.path.join("src", "01-use-case-doc.html"), "w", encoding="utf-8").write(doc)
 print("ok")

@@ -1,34 +1,34 @@
-# Design patterns
+# Design Patterns ที่ใช้ในโปรเจกต์
 
-Chosen GoF group: **Behavioral** (Strategy, Observer, Template Method, State).
-We also use one Creational (Factory, Builder) and one Structural (Adapter) pattern where they solve a real problem.
-Every row below points at the class that uses the pattern.
+กลุ่ม GoF ที่เลือก: **Behavioral** (กลุ่มพฤติกรรม) ได้แก่ Strategy, Observer, Template Method, State
+นอกจากนี้เรายังใช้ pattern กลุ่ม Creational (กลุ่มการสร้างออบเจกต์) คือ Factory, Builder และกลุ่ม Structural (กลุ่มโครงสร้าง) คือ Adapter ในจุดที่ช่วยแก้ปัญหาได้จริง
+ทุกแถวด้านล่างระบุ class ที่ใช้ pattern นั้นไว้
 
-## 5.1 Enterprise / architectural patterns (required)
+## 5.1 Enterprise / Architectural Patterns (บังคับ)
 
-| Pattern | Problem it solves | Files / classes |
+| Pattern | ปัญหาที่แก้ | ไฟล์ / class |
 |---|---|---|
-| Layered Architecture | Keeps HTTP, business rules and data access apart; no layer is skipped | `controller/*` → `service/*` → `repository/*` → `domain/*` |
-| MVC | Pages are rendered by Thymeleaf views from controllers | `controller/web/*PageController`, `templates/**`, model = DTOs |
-| Repository | Data access without SQL in services | `repository/*Repository` (Spring Data JPA), `MovieRepository` + `JpaSpecificationExecutor` |
-| Service Layer | One place for business rules and transactions | `service/*Service` interfaces + `service/impl/*` (`@Transactional`) |
-| DTO + Mapper | Entities never leave the service layer; the API contract stays stable | `dto/request`, `dto/response`, `mapper/*Mapper` |
-| Dependency Injection | Classes get collaborators through constructors only | every `@Service`, `@Component`, `@RestController` |
+| Layered Architecture | แยกส่วน HTTP, business rule และการเข้าถึงข้อมูลออกจากกัน และไม่มีการข้ามชั้น | `controller/*` → `service/*` → `repository/*` → `domain/*` |
+| MVC | หน้าเว็บถูก render ด้วย view ของ Thymeleaf ผ่าน controller | `controller/web/*PageController`, `templates/**`, model = DTO |
+| Repository | เข้าถึงข้อมูลได้โดยไม่ต้องเขียน SQL ใน service | `repository/*Repository` (Spring Data JPA), `MovieRepository` + `JpaSpecificationExecutor` |
+| Service Layer | รวม business rule และ transaction ไว้ที่เดียว | interface `service/*Service` + `service/impl/*` (`@Transactional`) |
+| DTO + Mapper | entity ไม่หลุดออกไปนอก service layer ทำให้ API contract คงที่ | `dto/request`, `dto/response`, `mapper/*Mapper` |
+| Dependency Injection | ทุก class รับ dependency ผ่าน constructor เท่านั้น | ทุก `@Service`, `@Component`, `@RestController` |
 
-## 5.2 GoF patterns
+## 5.2 GoF Patterns
 
-| Pattern | Group | Problem it solves | Files / classes | Owner |
+| Pattern | กลุ่ม | ปัญหาที่แก้ | ไฟล์ / class | ผู้รับผิดชอบ |
 |---|---|---|---|---|
-| **Strategy** | Behavioral | Reminders can go out in-app or by email; the caller shouldn't care which | `NotificationSender` (strategy), `InAppNotificationSender`, `EmailNotificationSender` | Pawarisa |
-| **Observer** | Behavioral | When a reminder is due or a review is saved, notifications must be created without the reminder/diary code depending on notifications | `ReminderDispatchServiceImpl` and `DiaryServiceImpl` publish `ReminderDueEvent` / `DiaryEntryLoggedEvent`; `NotificationEventListener` subscribes (`@EventListener`) | Pawarisa (+ Nunthaporn publishes) |
-| **Template Method** | Behavioral | Every channel follows the same steps (load user → deliver → save record) but delivery differs | `AbstractNotificationSender.send()` is `final`; subclasses implement `deliver()` and may override `recordText()` | Pawarisa |
-| **State** | Behavioral | A reminder can be SCHEDULED, SENT or CANCELLED; which actions are allowed depends on the state | `ReminderStatus` enum (each constant implements `send()`), used by `Reminder.markSent()` / `cancel()` / `reschedule()` | Pawarisa |
-| **Factory** | Creational | Pick the right sender for a channel without `if/else` | `NotificationSenderFactory.forChannel()` | Pawarisa |
-| **Builder** | Creational | The catalog has 7 optional filters; building the query with nested ifs was unreadable | `MovieSpecificationBuilder` (`text().genre().year()… .build()`), used in `MovieQueryServiceImpl.search()` | Prayfon |
-| **Adapter** | Structural | TMDB's JSON (snake_case, string dates, credits lists) must not leak into our model | `MovieCatalogSource` (target) ← `TmdbMovieCatalogAdapter` (adapter) → `TmdbClient` (adaptee) | Prayfon |
-| **Singleton** | Creational | One shared `Clock`, `RestClient` and `PasswordEncoder` | `@Bean` methods in `ClockConfig`, `TmdbClientConfig`, `SecurityConfig` (Spring singleton scope) | Pawarisa / Prayfon |
+| **Strategy** | Behavioral | การแจ้งเตือนส่งได้ทั้งในแอปและทางอีเมล โดยฝั่งที่เรียกใช้ไม่ต้องสนใจว่าส่งช่องทางไหน | `NotificationSender` (strategy), `InAppNotificationSender`, `EmailNotificationSender` | Pawarisa |
+| **Observer** | Behavioral | เมื่อถึงเวลาแจ้งเตือนหรือมีการบันทึกรีวิว ระบบต้องสร้าง notification ได้ โดยโค้ดส่วน reminder/diary ไม่ต้องพึ่งพาส่วน notification | `ReminderDispatchServiceImpl` และ `DiaryServiceImpl` publish `ReminderDueEvent` / `DiaryEntryLoggedEvent` ส่วน `NotificationEventListener` เป็นผู้ subscribe (`@EventListener`) | Pawarisa (+ Nunthaporn ฝั่ง publish) |
+| **Template Method** | Behavioral | ทุกช่องทางมีขั้นตอนเหมือนกัน (โหลด user → ส่ง → บันทึก record) ต่างกันแค่วิธีส่ง | `AbstractNotificationSender.send()` เป็น `final` โดย subclass ต้อง implement `deliver()` และ override `recordText()` ได้ | Pawarisa |
+| **State** | Behavioral | reminder มีสถานะ SCHEDULED, SENT หรือ CANCELLED และสิ่งที่ทำได้ขึ้นอยู่กับสถานะนั้น | enum `ReminderStatus` (แต่ละค่าคงที่ implement `send()` เอง) ถูกใช้โดย `Reminder.markSent()` / `cancel()` / `reschedule()` | Pawarisa |
+| **Factory** | Creational | เลือก sender ให้ตรงกับช่องทางได้โดยไม่ต้องใช้ `if/else` | `NotificationSenderFactory.forChannel()` | Pawarisa |
+| **Builder** | Creational | หน้า catalog มีตัวกรองที่ไม่บังคับถึง 7 ตัว ถ้าสร้าง query ด้วย if ซ้อนกันจะอ่านยากมาก | `MovieSpecificationBuilder` (`text().genre().year()… .build()`) ใช้ใน `MovieQueryServiceImpl.search()` | Prayfon |
+| **Adapter** | Structural | ต้องไม่ให้รูปแบบ JSON ของ TMDB (snake_case, วันที่เป็น string, รายการ credits) หลุดเข้ามาใน model ของเรา | `MovieCatalogSource` (target) ← `TmdbMovieCatalogAdapter` (adapter) → `TmdbClient` (adaptee) | Prayfon |
+| **Singleton** | Creational | ใช้ `Clock`, `RestClient` และ `PasswordEncoder` ร่วมกันเพียงตัวเดียว | method `@Bean` ใน `ClockConfig`, `TmdbClientConfig`, `SecurityConfig` (singleton scope ของ Spring) | Pawarisa / Prayfon |
 
-## Class diagram (pattern positions)
+## Class Diagram (ตำแหน่งของแต่ละ pattern)
 
 ```mermaid
 classDiagram

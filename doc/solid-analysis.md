@@ -1,49 +1,49 @@
-# SOLID analysis
+# การวิเคราะห์หลัก SOLID
 
-Where each principle shows up in the code, with the reason. Line numbers refer to the files as committed.
+เอกสารนี้ระบุว่าแต่ละหลักการปรากฏอยู่ตรงไหนในโค้ด พร้อมเหตุผล เลขบรรทัดอ้างอิงตามไฟล์ที่ commit ไว้
 
-> Rule check: no field injection (`@Autowired` on fields) anywhere in `code/`. Every class receives dependencies through its constructor.
+> ตรวจตามกฎแล้ว: ไม่มีการทำ field injection (`@Autowired` บน field) ใน `code/` เลย ทุก class รับ dependency ผ่าน constructor ของตัวเอง
 
-## S — Single Responsibility
+## S — Single Responsibility (หลักความรับผิดชอบเดียว)
 
-| Where | What it shows | Owner |
+| ตำแหน่ง | สิ่งที่แสดงให้เห็น | ผู้รับผิดชอบ |
 |---|---|---|
-| `code/src/main/java/com/cinemalog/service/external/tmdb/TmdbClient.java` L18 | TmdbClient only does HTTP calls to TMDB. Converting TMDB JSON into our model is a different job, done by TmdbMovieCatalogAdapter. | Prayfon |
-| `code/src/main/java/com/cinemalog/service/impl/DiaryServiceImpl.java` L118 | Business rules (no future dates, movie must be out) live in the service. Field validation is in the DTO annotations (DiaryEntryRequest), and saving is in WatchedMovieRepository. | Nunthaporn |
-| `code/src/main/java/com/cinemalog/service/notification/NotificationEventListener.java` L13 | The listener only turns events into notifications. The reminder code does not know how messages are delivered. | Pawarisa |
-| `code/src/main/java/com/cinemalog/mapper/MovieMapper.java` L19 | Entity → DTO conversion has its own class, so controllers and services do not build JSON shapes. | Prayfon |
+| `code/src/main/java/com/cinemalog/service/external/tmdb/TmdbClient.java` L18 | TmdbClient ทำหน้าที่แค่เรียก HTTP ไปที่ TMDB เท่านั้น ส่วนการแปลง JSON ของ TMDB ให้เป็น model ของเราเป็นอีกงานหนึ่ง ซึ่ง TmdbMovieCatalogAdapter เป็นคนทำ | Prayfon |
+| `code/src/main/java/com/cinemalog/service/impl/DiaryServiceImpl.java` L118 | business rule (ห้ามใส่วันที่ในอนาคต, หนังต้องออกฉายแล้ว) อยู่ใน service การ validate field อยู่ใน annotation ของ DTO (DiaryEntryRequest) และการบันทึกข้อมูลอยู่ใน WatchedMovieRepository | Nunthaporn |
+| `code/src/main/java/com/cinemalog/service/notification/NotificationEventListener.java` L13 | listener มีหน้าที่แค่แปลง event ให้เป็น notification ส่วนโค้ดของ reminder ไม่ต้องรู้ว่าข้อความถูกส่งออกไปอย่างไร | Pawarisa |
+| `code/src/main/java/com/cinemalog/mapper/MovieMapper.java` L19 | การแปลง Entity → DTO แยกเป็น class ของตัวเอง ทำให้ controller และ service ไม่ต้องสร้างรูปแบบ JSON เอง | Prayfon |
 
-## O — Open/Closed
+## O — Open/Closed (หลักเปิดให้ขยาย ปิดไม่ให้แก้ไข)
 
-| Where | What it shows | Owner |
+| ตำแหน่ง | สิ่งที่แสดงให้เห็น | ผู้รับผิดชอบ |
 |---|---|---|
-| `code/src/main/java/com/cinemalog/service/notification/NotificationSender.java` L5 | A new channel (e.g. LINE) is a new class implementing NotificationSender. The factory picks it up automatically, with no edits to existing code. | Pawarisa |
-| `code/src/main/java/com/cinemalog/service/notification/NotificationSenderFactory.java` L16 | The factory receives every sender bean from Spring, so it has no switch or if/else on channels. | Pawarisa |
-| `code/src/main/java/com/cinemalog/exception/ApiException.java` L5 | Each error type carries its own HTTP status. Adding a new error class needs no change in GlobalExceptionHandler. | Pawarisa |
-| `code/src/main/java/com/cinemalog/domain/enums/MovieSortOption.java` L7 | Each sort option carries its own Sort. Adding an option means adding one enum constant, with no switch in the service. | Prayfon |
+| `code/src/main/java/com/cinemalog/service/notification/NotificationSender.java` L5 | ถ้าจะเพิ่มช่องทางใหม่ (เช่น LINE) ก็แค่สร้าง class ใหม่ที่ implement NotificationSender แล้ว factory จะเลือกใช้ให้อัตโนมัติ โดยไม่ต้องแก้โค้ดเดิม | Pawarisa |
+| `code/src/main/java/com/cinemalog/service/notification/NotificationSenderFactory.java` L16 | factory รับ sender bean ทุกตัวมาจาก Spring จึงไม่ต้องมี switch หรือ if/else ตามช่องทาง | Pawarisa |
+| `code/src/main/java/com/cinemalog/exception/ApiException.java` L5 | error แต่ละประเภทเก็บ HTTP status ของตัวเองไว้ เวลาเพิ่ม error class ใหม่จึงไม่ต้องแก้ GlobalExceptionHandler | Pawarisa |
+| `code/src/main/java/com/cinemalog/domain/enums/MovieSortOption.java` L7 | ตัวเลือกการเรียงแต่ละแบบเก็บ Sort ของตัวเองไว้ ถ้าจะเพิ่มตัวเลือกก็แค่เพิ่มค่าคงที่ใน enum หนึ่งตัว โดยไม่ต้องมี switch ใน service | Prayfon |
 
-## L — Liskov Substitution
+## L — Liskov Substitution (หลักการแทนที่ของ Liskov)
 
-| Where | What it shows | Owner |
+| ตำแหน่ง | สิ่งที่แสดงให้เห็น | ผู้รับผิดชอบ |
 |---|---|---|
-| `code/src/main/java/com/cinemalog/service/notification/AbstractNotificationSender.java` L25 | InAppNotificationSender and EmailNotificationSender can replace each other anywhere a NotificationSender is expected. Both always save a record, and neither throws UnsupportedOperationException. | Pawarisa |
-| `code/src/main/java/com/cinemalog/service/external/MovieCatalogSource.java` L10 | Any catalog source (TMDB adapter, a mock in tests) honors the same contract: isAvailable() is false means "no data", never a crash. | Prayfon |
-| `code/src/main/java/com/cinemalog/domain/enums/ReminderStatus.java` L43 | Every state implements the same methods. Invalid moves report a BusinessRuleException (normal 400 error), not UnsupportedOperationException. | Pawarisa |
+| `code/src/main/java/com/cinemalog/service/notification/AbstractNotificationSender.java` L25 | InAppNotificationSender และ EmailNotificationSender ใช้แทนกันได้ในทุกจุดที่ต้องการ NotificationSender ทั้งสองตัวบันทึก record ทุกครั้ง และไม่มีตัวไหน throw UnsupportedOperationException | Pawarisa |
+| `code/src/main/java/com/cinemalog/service/external/MovieCatalogSource.java` L10 | แหล่งข้อมูล catalog ทุกตัว (TMDB adapter หรือ mock ในเทสต์) ทำตาม contract เดียวกัน คือถ้า isAvailable() เป็น false แปลว่า "ไม่มีข้อมูล" ไม่ใช่ระบบพัง | Prayfon |
+| `code/src/main/java/com/cinemalog/domain/enums/ReminderStatus.java` L43 | ทุกสถานะ implement method ชุดเดียวกัน การเปลี่ยนสถานะที่ไม่ถูกต้องจะแจ้งเป็น BusinessRuleException (error 400 ปกติ) ไม่ใช่ UnsupportedOperationException | Pawarisa |
 
-## I — Interface Segregation
+## I — Interface Segregation (หลักการแยก interface)
 
-| Where | What it shows | Owner |
+| ตำแหน่ง | สิ่งที่แสดงให้เห็น | ผู้รับผิดชอบ |
 |---|---|---|
-| `code/src/main/java/com/cinemalog/service/DiaryQueryService.java` L12 | Reading the diary and changing it are separate interfaces (DiaryQueryService / DiaryCommandService), so read-only clients don't see write methods. | Nunthaporn |
-| `code/src/main/java/com/cinemalog/service/ReminderDispatchService.java` L5 | Sending due reminders is apart from ReminderService (what users do). Only the scheduler needs it, and no controller sees it. | Pawarisa |
-| `code/src/main/java/com/cinemalog/service/AuthService.java` L6 | Registration (AuthService) is separate from profile editing (UserProfileService). | Pawarisa |
-| `code/src/main/java/com/cinemalog/service/MovieDiscoveryService.java` L8 | Shelves and recommendations are separate from search/detail (MovieQueryService) and from TMDB syncing (MovieSyncService). | Prayfon |
+| `code/src/main/java/com/cinemalog/service/DiaryQueryService.java` L12 | การอ่าน diary กับการแก้ไข diary แยกเป็นคนละ interface (DiaryQueryService / DiaryCommandService) ทำให้ client ที่อ่านอย่างเดียวไม่เห็น method สำหรับเขียน | Nunthaporn |
+| `code/src/main/java/com/cinemalog/service/ReminderDispatchService.java` L5 | การส่ง reminder ที่ถึงกำหนดแยกออกจาก ReminderService (สิ่งที่ผู้ใช้ทำ) มีแค่ scheduler ที่ต้องใช้ และไม่มี controller ตัวไหนเห็น | Pawarisa |
+| `code/src/main/java/com/cinemalog/service/AuthService.java` L6 | การสมัครสมาชิก (AuthService) แยกออกจากการแก้ไขโปรไฟล์ (UserProfileService) | Pawarisa |
+| `code/src/main/java/com/cinemalog/service/MovieDiscoveryService.java` L8 | ชั้นแสดงหนังและการแนะนำหนังแยกออกจากการค้นหา/ดูรายละเอียด (MovieQueryService) และแยกจากการ sync ข้อมูลกับ TMDB (MovieSyncService) | Prayfon |
 
-## D — Dependency Inversion
+## D — Dependency Inversion (หลักการกลับทิศทางการพึ่งพา)
 
-| Where | What it shows | Owner |
+| ตำแหน่ง | สิ่งที่แสดงให้เห็น | ผู้รับผิดชอบ |
 |---|---|---|
-| `code/src/main/java/com/cinemalog/service/impl/MovieQueryServiceImpl.java` L38 | The service depends on the MovieCatalogSource and MovieSyncService interfaces, not on TmdbClient. Everything is injected through the constructor only. | Prayfon |
-| `code/src/main/java/com/cinemalog/controller/api/DiaryController.java` L47 | Controllers depend on service interfaces and on CurrentUserProvider (not on Spring Security classes), using constructor injection. | Nunthaporn |
-| `code/src/main/java/com/cinemalog/config/ClockConfig.java` L13 | Services depend on an injected Clock instead of calling LocalDate.now(), so tests can fix the date. | Pawarisa |
-| `code/src/main/java/com/cinemalog/service/impl/LibraryServiceImpl.java` L36 | Library state uses the ReminderService and NotificationService interfaces from another module instead of their implementations. | Nunthaporn |
+| `code/src/main/java/com/cinemalog/service/impl/MovieQueryServiceImpl.java` L38 | service พึ่งพา interface MovieCatalogSource และ MovieSyncService ไม่ได้พึ่งพา TmdbClient โดยตรง และทุกอย่างถูก inject ผ่าน constructor เท่านั้น | Prayfon |
+| `code/src/main/java/com/cinemalog/controller/api/DiaryController.java` L47 | controller พึ่งพา interface ของ service และ CurrentUserProvider (ไม่ได้พึ่งพา class ของ Spring Security) โดยใช้ constructor injection | Nunthaporn |
+| `code/src/main/java/com/cinemalog/config/ClockConfig.java` L13 | service ใช้ Clock ที่ถูก inject เข้ามาแทนการเรียก LocalDate.now() ทำให้เทสต์สามารถกำหนดวันที่ตายตัวได้ | Pawarisa |
+| `code/src/main/java/com/cinemalog/service/impl/LibraryServiceImpl.java` L36 | ส่วนจัดการสถานะของคลังหนังใช้ interface ReminderService และ NotificationService จากโมดูลอื่น แทนที่จะใช้ implementation ของมันโดยตรง | Nunthaporn |

@@ -1,15 +1,15 @@
-# Domain model (conceptual class diagram)
+# Domain Model (Class Diagram เชิงแนวคิด)
 
-Conceptual view of the business objects: names, key attributes and multiplicities only.
-Technical columns (ids, `created_at`, `updated_at`) are in the ER diagram ([`06-er-diagram.md`](06-er-diagram.md)).
-Source of truth: `code/src/main/java/com/cinemalog/domain/entity/*` and `domain/enums/*`.
+มุมมองเชิงแนวคิดของ object ทางธุรกิจ แสดงแค่ชื่อ แอตทริบิวต์หลัก และ multiplicity
+คอลัมน์ทางเทคนิค (id, `created_at`, `updated_at`) อยู่ใน ER diagram ([`06-er-diagram.md`](06-er-diagram.md))
+อ้างอิงจากโค้ดจริง: `code/src/main/java/com/cinemalog/domain/entity/*` และ `domain/enums/*`
 
-Source: [`02-domain-model.puml`](02-domain-model.puml) · rendered: [`02-domain-model.svg`](02-domain-model.svg)
+ไฟล์ต้นฉบับ: [`02-domain-model.puml`](02-domain-model.puml) · รูปที่ render แล้ว: [`02-domain-model.svg`](02-domain-model.svg)
 
 ![Domain model](02-domain-model.svg)
 
-Notes
-- `CollectionMovie` is its own concept (not a plain many-to-many) because it records **when** a movie was added (`addedAt`).
-- A user may log the same movie more than once (rewatches), so `WatchedMovie` has no uniqueness on user + movie. Watchlist, likes, collection items and reminders are unique per user + movie (see ER diagram).
-- `NotificationType.NOW_IN_THEATERS` is declared in the enum but no code creates it yet; only `RELEASE_REMINDER` (`NotificationEventListener.onReminderDue`) and `REVIEW_ADDED` (`onDiaryEntryLogged`) are produced.
-- `Notification` → `Movie` is optional: the foreign key is nullable and is set to `NULL` if the movie is deleted.
+หมายเหตุ
+- `CollectionMovie` แยกเป็น concept ของตัวเอง (ไม่ใช่ many-to-many ธรรมดา) เพราะต้องเก็บว่าเพิ่มหนังเข้ามา**เมื่อไร** (`addedAt`)
+- ผู้ใช้บันทึกหนังเรื่องเดิมได้มากกว่าหนึ่งครั้ง (ดูซ้ำ) ดังนั้น `WatchedMovie` จึงไม่มี unique บน user + movie ส่วน watchlist, like, หนังในคอลเลกชัน และ reminder จะ unique ต่อ user + movie (ดู ER diagram)
+- `NotificationType.NOW_IN_THEATERS` ประกาศไว้ใน enum แต่ยังไม่มีโค้ดส่วนไหนสร้างค่านี้ ตอนนี้มีแค่ `RELEASE_REMINDER` (`NotificationEventListener.onReminderDue`) และ `REVIEW_ADDED` (`onDiaryEntryLogged`) ที่ถูกสร้างจริง
+- ความสัมพันธ์ `Notification` → `Movie` เป็นแบบไม่บังคับ: foreign key เป็น nullable และจะถูกตั้งเป็น `NULL` ถ้าหนังถูกลบ
