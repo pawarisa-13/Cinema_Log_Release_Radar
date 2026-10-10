@@ -1,2 +1,4 @@
-ใส่สไลด์นำเสนอไว้ที่นี่ (PDF หรือ PPTX) ก่อนส่งงาน
-ลำดับที่แนะนำ: ปัญหา → demo → สถาปัตยกรรม → ฐานข้อมูล → SOLID → patterns → เทสต์ → deployment → ใครทำส่วนไหน
+ # สไลด์นำเสนอ
+
+   - ไฟล์ PDF: [Poppy_Night_Presentation.pdf](Poppy_Night_Presentation.pdf)
+   - ดูออนไลน์ (Canva): [ลิงก์ Canva](https://canva.link/ksvzbul7zln4a2c)
