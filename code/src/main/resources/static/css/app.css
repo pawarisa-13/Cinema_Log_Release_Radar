@@ -14,8 +14,8 @@
     --hl: #F5E29C;
     --heart: #C65D57;
     --scrim: rgba(32, 28, 24, .34);
-    --font-hand: 'Gaegu', 'Comic Sans MS', 'Chalkboard SE', cursive;
-    --font-ui: 'Zen Kaku Gothic New', 'Hiragino Sans', 'Noto Sans Thai', 'Segoe UI', system-ui, sans-serif;
+    --font-hand:'Gaegu','Itim','Comic Sans MS','Chalkboard SE',cursive;
+    --font-ui:'Zen Kaku Gothic New','Itim','Hiragino Sans','Noto Sans Thai','Segoe UI',system-ui,sans-serif;
     --wob: 255px 16px 225px 16px / 16px 225px 16px 255px;
     --wob2: 16px 225px 16px 255px / 255px 16px 225px 16px;
 }
