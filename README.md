@@ -159,6 +159,7 @@ Reports: `code/target/reports/surefire.html` (tests), `code/target/site/jacoco/i
 - เว็บ: https://poppy-night.onrender.com
 - Swagger UI: https://poppy-night.onrender.com/swagger-ui.html
 - Health check: https://poppy-night.onrender.com/actuator/health
+- สไลด์นำเสนอ: [PDF](doc/slide/Poppy_Night_Presentation.pdf) · [Canva](https://canva.link/ksvzbul7zln4a2c)
 
 > เว็บใช้ Render แบบฟรี ถ้าไม่มีคนเข้าประมาณ 15 นาที เซิร์ฟเวอร์จะหลับ การเปิดครั้งแรกหลังจากนั้นอาจรอประมาณ 1 นาที
 
